@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2 class="auth-title">Welcome back</h2>
+
+    {% if form.errors or form.non_field_errors %}
+      <div class="auth-alert">Invalid username or password. Please try again.</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}" class="auth-form">
+      {% csrf_token %}
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      <label for="id_username">Username</label>
+      {{ form.username }}
+
+      <label for="id_password">Password</label>
+      {{ form.password }}
+
+      <button type="submit" class="btn-primary">Sign in</button>
+    </form>
+
+    <div class="auth-meta">
+      <a href="{% url 'password_reset' %}">Forgot password?</a>
+      <span>·</span>
+      <a href="#">Create account</a> <!-- hook up later -->
+    </div>
+  </div>
+</div>
+{% endblock %}
