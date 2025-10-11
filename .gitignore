@@ -1,0 +1,79 @@
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.tox/
+.nox/
+
+# --- Virtual environments ---
+venv/
+.venv/
+ENV/
+env/
+
+# --- Django / project artifacts ---
+# Local dev DBs
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
+
+# Logs & runtime
+*.log
+logs/
+tmp/
+temp/
+
+# Static & media (only build/collected outputs, keep your source static app dirs)
+staticfiles/
+static_root/
+collectstatic/
+media/
+
+# Translations (compiled)
+# locale/*/LC_MESSAGES/*.mo
+
+# --- Secrets / config ---
+.env
+.env.*
+*.env
+*.env.*
+
+# --- Packaging ---
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+pip-log.txt
+
+# --- Coverage / test reports ---
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+junit*.xml
+nosetests.xml
+test-results.xml
+
+# --- Editors / IDEs ---
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.iml
+
+# --- Misc backups ---
+*.swp
+*.swo
+*.bak
+*.orig

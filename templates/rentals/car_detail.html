@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h2>{{ car.title }}</h2>
+<p>Type: {{ car.get_car_type_display }}</p>
+<p>Price: ${{ car.price_per_day }} /day</p>
+<p>{{ car.description }}</p>
+{% if user.is_authenticated %}
+<h3>Book this car</h3>
+<form method="post" action="{% url 'create_booking' car.pk %}">
+  {% csrf_token %} {{ form.as_p }}
+  <button type="submit">Book</button>
+</form>
+{% else %}<p><a href="/login/">Login</a> to book.</p>{% endif %}
+{% endblock %}
