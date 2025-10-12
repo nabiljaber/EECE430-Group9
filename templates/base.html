@@ -1,26 +1,93 @@
 {% load static %}
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Ajerlo</title>
+  <title>{{ SITE_NAME }}{% block title %}{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{ SITE_TAGLINE }}">
+  <link rel="icon" href="{% static 'favicon.ico' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-<body>
-  <header><h1>Ajerlo</h1></header>
+<body class="site">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'home' %}">
+        <img src="{% static 'img/logo.svg' %}" alt="" class="brand-logo" />
+        <span class="brand-name">{{ SITE_NAME }}</span>
+      </a>
 
-  <nav>
-    <a href="/">Home</a> |
-    {% if user.is_authenticated %}
-      <a href="/rentals/add/">Add Car</a> |
-      <a href="/accounts/logout/">Logout</a>
-    {% else %}
-      <a href="/accounts/login/">Login</a>
-    {% endif %}
-  </nav>
+      <nav class="main-nav">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'car_list' %}">Browse Cars</a>
 
-  <main>
+        {% if user.is_authenticated %}
+          {% if user.is_staff or user.is_superuser %}
+            <a href="{% url 'add_car' %}" class="btn btn-outline">Add Car</a>
+          {% endif %}
+
+          <div class="user-menu">
+            <button class="avatar-btn" id="avatarBtn" aria-haspopup="menu" aria-expanded="false">
+              <span class="avatar">
+                {% with name=user.first_name|default:user.username %}
+                  {{ name|slice:":1"|upper }}
+                {% endwith %}
+              </span>
+            </button>
+
+            <div class="menu" id="userMenu" role="menu" aria-labelledby="avatarBtn">
+              <div class="menu-header">
+                <div class="avatar sm">
+                  {% with name=user.first_name|default:user.username %}
+                    {{ name|slice:":1"|upper }}
+                  {% endwith %}
+                </div>
+                <div>
+                  <div class="menu-username">{{ user.username }}</div>
+                  {% if user.email %}<div class="menu-email">{{ user.email }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="menu-items">
+                <a role="menuitem" href="{% url 'account_dashboard' %}">My account</a>
+                <a role="menuitem" href="{% url 'password_change' %}">Change password</a>
+                <div class="menu-sep"></div>
+                <a role="menuitem" href="{% url 'logout' %}">Sign out</a>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn">Login</a>
+          <a href="{% url 'signup' %}" class="btn btn-primary">Create account</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main container">
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner" style="justify-content:flex-end;">
+      <div class="muted">© {{ SITE_NAME }} {% now "Y" %}. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      const btn = document.getElementById('avatarBtn');
+      const menu = document.getElementById('userMenu');
+      if(!btn || !menu) return;
+      const close = () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded','false'); };
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const willOpen = !menu.classList.contains('open');
+        if (willOpen) { menu.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+        else { close(); }
+      });
+      document.addEventListener('click', (e)=>{ if(menu.classList.contains('open') && !menu.contains(e.target) && e.target!==btn) close(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+    })();
+  </script>
 </body>
 </html>
