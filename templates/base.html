@@ -21,7 +21,22 @@
         <a href="{% url 'home' %}">Home</a>
         <a href="{% url 'car_list' %}">Browse Cars</a>
 
+<<<<<<< HEAD
+        {# Dealer Dashboard link (only for active dealers) #}
+        {% if user.is_authenticated and user.dealer_profile and user.dealer_profile.active %}
+          <a href="{% url 'dealer_dashboard' %}">Dealer Dashboard</a>
+        {% endif %}
+
+        {# Show "Become a dealer" if user is not an active dealer (no parentheses) #}
+        {% if not user.is_authenticated or not user.dealer_profile or not user.dealer_profile.active %}
+          <a href="{% url 'dealer_apply' %}">Become a dealer</a>
+        {% endif %}
+
         {% if user.is_authenticated %}
+          {# Staff-only Add Car (optional; dealers add via Dealer Dashboard) #}
+=======
+        {% if user.is_authenticated %}
+>>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
           {% if user.is_staff or user.is_superuser %}
             <a href="{% url 'add_car' %}" class="btn btn-outline">Add Car</a>
           {% endif %}
@@ -89,5 +104,10 @@
       document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
     })();
   </script>
+<<<<<<< HEAD
+
+  {% block extra_scripts %}{% endblock %}
+=======
+>>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
 </body>
 </html>

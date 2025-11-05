@@ -175,3 +175,80 @@ fieldset{border:1px dashed var(--line);border-radius:10px;padding:12px;margin:10
 .menu-items a { padding: 8px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; }
 .menu-items a:hover { background: #0b0f14; color: #fff; }
 .menu-sep { height: 1px; background: var(--line); margin: 6px 0; }
+<<<<<<< HEAD
+
+/* === Ajerlo add-ons (Home hero, Browse cards, Detail page) =============== */
+
+/* Card grids */
+.grid.cards-3 { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:16px; }
+.detail-grid   { display:grid; grid-template-columns: 2fr 1fr; gap:16px; }
+@media (max-width: 900px){ .detail-grid{ grid-template-columns:1fr; } }
+
+/* Hero search (home) */
+.searchbar .row{ display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:12px; }
+@media (max-width: 900px){ .searchbar .row{ grid-template-columns: 1fr; } }
+.searchbar label{ font-size:12px; color: var(--muted); margin-bottom:6px; }
+.searchbar .row-pills{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.pill{ display:inline-flex; align-items:center; gap:8px; background:#0f1722; border:1px solid #20324a; padding:8px 12px; border-radius:999px; color:var(--ink-2); cursor:pointer; }
+.pill input{ accent-color: var(--brand); }
+
+/* Car cards (list + home featured) */
+.car-card{ padding:0; overflow:hidden; }
+.car-card .thumb{ display:block; height:160px; background:#0f1722; border-bottom:1px solid var(--line); overflow:hidden; }
+.car-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+.car-card .body{ padding:14px; }
+.car-card .title{ margin:0 0 4px; }
+.car-card .meta{ color: var(--muted); font-size:14px; }
+.car-card .price{ margin-top:6px; }
+
+/* Detail page */
+.detail-hero{ width:100%; height:380px; object-fit:cover; border-radius:12px; }
+.price-lg{ font-size:20px; margin-bottom:10px; }
+
+/* Toolbar (browse page filters) */
+.list-toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.filters{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+
+/* --- Europcar-like hero panel --- */
+.eu-hero { margin-top: 8px; }
+.eu-hero-inner { background:#0e141b; border:1px solid var(--line); padding:16px; }
+.eu-tabs { display:flex; gap:10px; margin-bottom:12px; }
+.eu-tab { padding:10px 14px; border-radius:10px; border:1px solid #2b384d; background:#0f1722; color:var(--ink-2); cursor:pointer; }
+.eu-tab.active { background:#1e2b40; color:#fff; border-color:#3a4a64; }
+.eu-form .eu-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:12px; }
+.eu-cell label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+.eu-cell-2 { grid-column: span 2; }
+.eu-search { display:block; width:100%; padding:12px 16px; border-radius:10px; border:0; background:#ffd21f; color:#111; font-weight:800; cursor:pointer; }
+.eu-mini { display:flex; gap:18px; margin-top:10px; color:var(--ink-2); }
+.eu-check { display:flex; align-items:center; gap:8px; }
+@media (max-width: 900px){
+  .eu-form .eu-grid { grid-template-columns:1fr; }
+  .eu-cell-2 { grid-column: auto; }
+}
+
+/* Make main fill the viewport so promos can sit at bottom */
+.site-main{
+  min-height: calc(100vh - 64px - 76px); /* header + footer heights */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Push promos to the bottom of main content */
+.promos{ margin-top: auto; }
+
+/* Side-by-side layout for the three promo cards */
+.promos-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Optional: slightly rounder, airy promo cards */
+.promo{ padding: 18px; border-radius: 14px; }
+
+/* Stack on small screens */
+@media (max-width: 900px){
+  .promos-grid{ grid-template-columns: 1fr; }
+}
+=======
+>>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a

@@ -1,3 +1,48 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<h1>Browse Cars</h1>
+
+<div class="card list-toolbar">
+  <form method="get" class="filters">
+    <input type="text" name="q" placeholder="Search by title, city…" value="{{ q }}">
+    <select name="type">
+      <option value="">Any type</option>
+      <option value="sedan" {% if type == 'sedan' %}selected{% endif %}>Sedan</option>
+      <option value="suv"   {% if type == 'suv' %}selected{% endif %}>SUV</option>
+      <option value="hatch" {% if type == 'hatch' %}selected{% endif %}>Hatchback</option>
+      <option value="van"   {% if type == 'van' %}selected{% endif %}>Van</option>
+    </select>
+    <button class="btn">Apply</button>
+  </form>
+</div>
+
+{% if cars %}
+  <div class="grid cards-3">
+    {% for car in cars %}
+      <article class="car-card card">
+        <a class="thumb" href="{% url 'car_detail' car.pk %}">
+          <img src="{% static 'img/car-placeholder.jpg' %}" alt="{{ car.title }}">
+        </a>
+        <div class="body">
+          <h3 class="title"><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>
+          <div class="meta">
+            {{ car.get_car_type_display }}
+            {% if car.year %} · {{ car.year }}{% endif %}
+          </div>
+          <div class="price"><strong>${{ car.price_per_day }}</strong> / day</div>
+          <a class="btn btn-secondary btn-block mt-3" href="{% url 'car_detail' car.pk %}">View details</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="muted">No cars match your filters.</p>
+{% endif %}
+
+=======
 {% extends "base.html" %}{% block content %}
 <h2>Browse Cars</h2>
 <form method="get" class="filters">
@@ -19,4 +64,5 @@
   </div>
 {% empty %}<p>No cars found.</p>{% endfor %}
 </div>
+>>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
 {% endblock %}
