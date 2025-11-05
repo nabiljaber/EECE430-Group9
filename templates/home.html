@@ -1,14 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
+
+<section class="hero center">
+  <h1 style="margin:6px 0 2px; letter-spacing:1px;">AJERLO</h1>
+  <p class="muted" style="max-width:640px;margin:8px auto 16px">
+    Book cars with confidence
+  </p>
+  <div class="space-y">
+    <a href="{% url 'car_list' %}" class="btn btn-primary">Browse cars</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'add_car' %}" class="btn btn-outline">Add your car</a>
+    {% else %}
+      <a href="{% url 'signup' %}" class="btn btn-secondary">Create account</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="mt-4">
   <h2>Newest Cars</h2>
-  <ul>
+  <div class="grid">
     {% for car in cars %}
-      <li>
-        <a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a>
-        — {{ car.get_car_type_display }} · ${{ car.price_per_day }}/day
-      </li>
+      <div class="card">
+        <h3><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>
+        <div class="meta">{{ car.get_car_type_display }} · <span class="price-tag">${{ car.price_per_day }}/day</span></div>
+      </div>
     {% empty %}
-      <li>No cars yet.</li>
+      <p class="muted">No cars yet.</p>
     {% endfor %}
-  </ul>
+  </div>
+</section>
+
 {% endblock %}

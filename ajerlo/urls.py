@@ -6,5 +6,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('rentals/', include('rentals.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),  # login/logout
+    path('accounts/', include('accounts.urls')),            # <-- add this
+    path('accounts/', include('django.contrib.auth.urls')), # login/logout/reset
 ]
