@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
@@ -41,4 +42,27 @@
   <p class="muted">No cars match your filters.</p>
 {% endif %}
 
+=======
+{% extends "base.html" %}{% block content %}
+<h2>Browse Cars</h2>
+<form method="get" class="filters">
+  <input name="q" placeholder="Search..." value="{{ q }}">
+  <select name="type">
+    <option value="">All Types</option>
+    <option value="sedan" {% if type=='sedan' %}selected{% endif %}>Sedan</option>
+    <option value="suv"   {% if type=='suv' %}selected{% endif %}>SUV</option>
+    <option value="hatch" {% if type=='hatch' %}selected{% endif %}>Hatchback</option>
+    <option value="van"   {% if type=='van' %}selected{% endif %}>Van</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+<div class="grid">
+{% for car in cars %}
+  <div class="card">
+    <h3><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>
+    <p>{{ car.get_car_type_display }} · ${{ car.price_per_day }} /day</p>
+  </div>
+{% empty %}<p>No cars found.</p>{% endfor %}
+</div>
+>>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
 {% endblock %}
