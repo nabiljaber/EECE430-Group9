@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # rentals/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -59,7 +58,7 @@ class DealerApplyForm(UserCreationForm):
                 name=self.cleaned_data["dealer_name"],
                 email=user.email,
                 phone=self.cleaned_data.get("phone", ""),
-                active=True,  # set to False if you want manual approval
+                active=True,  # set False if you want manual approval
             )
         return user
 
@@ -101,7 +100,7 @@ class BookingForm(forms.ModelForm):
 
 
 # ---------------------------
-# (Optional) Legacy add_car path
+# (Optional) Legacy add_car path (keep only if something still imports CarForm)
 # ---------------------------
 class CarForm(forms.ModelForm):
     class Meta:
@@ -110,21 +109,4 @@ class CarForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "price_per_day": forms.NumberInput(attrs={"step": "0.01"}),
-=======
-from django import forms
-from .models import Car, Booking
-
-class CarForm(forms.ModelForm):
-    class Meta:
-        model = Car
-        fields = ["dealer","title","car_type","price_per_day","description","available"]
-
-class BookingForm(forms.ModelForm):
-    class Meta:
-        model = Booking
-        fields = ["start_date","end_date"]
-        widgets = {
-            "start_date": forms.DateInput(attrs={"type":"date"}),
-            "end_date": forms.DateInput(attrs={"type":"date"}),
->>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
         }

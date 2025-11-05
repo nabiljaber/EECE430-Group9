@@ -1,15 +1,18 @@
+# rentals/models.py
 from django.db import models
-<<<<<<< HEAD
 from django.conf import settings
+
 
 # -----------------------------
 # Dealer
 # -----------------------------
 class Dealer(models.Model):
-    # Optional link to the auth user who owns this dealership (one account per dealer)
+    # One account per dealer (lets us use user.dealer_profile in guards/menus)
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, null=True, blank=True,
-        on_delete=models.CASCADE, related_name="dealer_profile"
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name="dealer_profile",
     )
     name = models.CharField(max_length=150)
     email = models.EmailField()
@@ -42,33 +45,16 @@ class Car(models.Model):
 
     dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE, related_name="cars")
 
-    # Your original fields
     title = models.CharField(max_length=150)
     car_type = models.CharField(max_length=10, choices=TYPES, default="sedan")
-=======
-from django.contrib.auth.models import User
-
-class Dealer(models.Model):
-    name = models.CharField(max_length=120)
-    email = models.EmailField()
-    phone = models.CharField(max_length=30, blank=True)
-    def __str__(self): return self.name
-
-class Car(models.Model):
-    TYPES = [('sedan','Sedan'),('suv','SUV'),('hatch','Hatchback'),('van','Van')]
-    dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE, related_name='cars')
-    title = models.CharField(max_length=150)
-    car_type = models.CharField(max_length=10, choices=TYPES, default='sedan')
->>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
     price_per_day = models.DecimalField(max_digits=8, decimal_places=2)
     description = models.TextField(blank=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-<<<<<<< HEAD
 
-    # Useful extras for search/filter (optional but handy)
-    make = models.CharField(max_length=100, blank=True)        # e.g., Toyota
-    model = models.CharField(max_length=100, blank=True)       # e.g., Corolla
+    # Optional extras used by UI/filters
+    make = models.CharField(max_length=100, blank=True)   # e.g., Toyota
+    model = models.CharField(max_length=100, blank=True)  # e.g., Corolla
     year = models.PositiveSmallIntegerField(null=True, blank=True)
     transmission = models.CharField(max_length=10, choices=TRANSMISSION, default="AUTO")
     seats = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -90,12 +76,12 @@ class Car(models.Model):
         return f"{self.title} ({self.dealer.name})"
 
 
-# Optional (nice-to-have) – simple gallery support for cars
-# Requires MEDIA settings + Pillow if you decide to use ImageField.
-# You can comment this out for now if you’re not ready.
+# -----------------------------
+# Car images (gallery)
+# -----------------------------
 class CarImage(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="images")
-    # If you don’t want images yet, replace ImageField with a CharField path
+    # Requires Pillow if you keep ImageField; otherwise switch to CharField path.
     image = models.ImageField(upload_to="cars/", blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -142,16 +128,3 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.car.title} | {self.user} ({self.status})"
-=======
-    def __str__(self): return f"{self.title} ({self.dealer.name})"
-
-class Booking(models.Model):
-    STATUS = [('pending','Pending'),('confirmed','Confirmed'),('cancelled','Cancelled')]
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='bookings')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    status = models.CharField(max_length=12, choices=STATUS, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-    def __str__(self): return f"{self.car.title} | {self.user.username} ({self.status})"
->>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
