@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Become a dealer</h1>
+<div class="card">
+  <form method="post" class="space-y auth-form">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Account</legend>
+      <label>Username</label>{{ form.username }}
+      <label>Email</label>{{ form.email }}
+      <div class="form-row">
+        <div><label>First name</label>{{ form.first_name }}</div>
+        <div><label>Last name</label>{{ form.last_name }}</div>
+      </div>
+      <div class="form-row">
+        <div><label>Password</label>{{ form.password1 }}</div>
+        <div><label>Confirm password</label>{{ form.password2 }}</div>
+      </div>
+      <div class="helptext">Min 9 chars. Must not include your name or username.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dealership</legend>
+      <label>Dealership name</label>{{ form.dealer_name }}
+      <label>Phone</label>{{ form.phone }}
+    </fieldset>
+
+    <div class="auth-actions">
+      <a class="btn btn-outline" href="{% url 'home' %}">Cancel</a>
+      <button class="btn btn-primary">Create dealership</button>
+    </div>
+
+    {% if form.errors %}
+      <div class="alert error mt-3">
+        Please fix the errors above.
+      </div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

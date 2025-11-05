@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2 class="auth-title">Create your AJERLO account</h2>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="form-row">
+        <div>
+          <label>First name</label>
+          {{ form.first_name }}
+        </div>
+        <div>
+          <label>Last name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+      <label>Username</label>
+      {{ form.username }}
+      <label>Email</label>
+      {{ form.email }}
+      <label>Password <span class="muted">(min 9 characters; cannot include your name or username)</span></label>
+      {{ form.password1 }}
+      <label>Confirm password</label>
+      {{ form.password2 }}
+      <button type="submit" class="btn btn-primary btn-block mt-3">Create account</button>
+    </form>
+    <p class="auth-meta mt-3">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}

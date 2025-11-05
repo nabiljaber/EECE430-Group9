@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- HERO PANEL -->
+<section class="eu-hero">
+  <div class="eu-hero-inner card">
+    <div class="eu-tabs">
+      <button type="button" class="eu-tab active" data-type="">Cars</button>
+      <button type="button" class="eu-tab" data-type="van">Vans & Trucks</button>
+    </div>
+
+    <form action="{% url 'car_list' %}" method="get" class="eu-form" id="euSearch">
+      <input type="hidden" name="type" id="euType" value="">
+      <div class="eu-grid">
+        <div class="eu-cell eu-cell-2">
+          <label>Pickup and return location</label>
+          <input name="q" placeholder="City, address, point of interest" value="{{ request.GET.q }}">
+        </div>
+        <div class="eu-cell">
+          <label>Pick up date</label>
+          <input type="date" name="start">
+        </div>
+        <div class="eu-cell">
+          <label>Return date</label>
+          <input type="date" name="end">
+        </div>
+        <div class="eu-cell">
+          <label>&nbsp;</label>
+          <button class="eu-search">Search</button>
+        </div>
+      </div>
+
+      <div class="eu-mini">
+        <label class="eu-check">
+          <input type="checkbox" checked> Same return location
+        </label>
+        <label class="eu-check">
+          <input type="checkbox"> I have a negotiated rate
+        </label>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- NEWEST -->
+<section class="mt-4">
+  <h2>Newest cars</h2>
+  {% if cars %}
+    <div class="grid cards-3">
+      {% for c in cars %}
+        <article class="car-card card">
+          <a class="thumb" href="{% url 'car_detail' c.pk %}">
+            <img src="{% static 'img/car-placeholder.jpg' %}" alt="{{ c.title }}">
+          </a>
+          <div class="body">
+            <h3 class="title"><a href="{% url 'car_detail' c.pk %}">{{ c.title }}</a></h3>
+            <div class="meta">{{ c.get_car_type_display }}{% if c.year %} · {{ c.year }}{% endif %}</div>
+            <div class="price"><strong>${{ c.price_per_day }}</strong> / day</div>
+            <a class="btn btn-secondary btn-block mt-3" href="{% url 'car_detail' c.pk %}">View details</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No cars yet.</p>
+  {% endif %}
+</section>
+
+<!-- PROMOS (stick to bottom and sit side-by-side) -->
+<section class="promos">
+  <div class="promos-grid">
+    <div class="card promo">
+      <h3>Free cancellation</h3>
+      <p class="muted">Cancel up to 24h before pickup on most bookings.</p>
+    </div>
+    <div class="card promo">
+      <h3>Trusted dealers</h3>
+      <p class="muted">Verified partners. Clear pricing. No hidden fees.</p>
+    </div>
+    <div class="card promo">
+      <h3>24/7 support</h3>
+      <p class="muted">We’re here to help before, during, and after your trip.</p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Toggle tabs to set ?type=
+  (function(){
+    const tabs = document.querySelectorAll('.eu-tab');
+    const typeInput = document.getElementById('euType');
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      typeInput.value = t.dataset.type || '';
+    }));
+  })();
+</script>
+{% endblock %}

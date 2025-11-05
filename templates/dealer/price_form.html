@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Update price — {{ car.title }}</h1>
+<div class="card">
+  <form method="post" class="space-y">
+    {% csrf_token %}
+    <label>Price / day (USD)</label>{{ form.price_per_day }}
+    <button class="btn btn-primary mt-3">Save</button>
+    <a class="btn btn-outline" href="{% url 'dealer_dashboard' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dealer Dashboard</h1>
+
+<div class="space-y">
+  <div class="card">
+    <h3>{{ dealer.name }}</h3>
+    <p class="meta">
+      Account: {{ request.user.username }}{% if request.user.email %} · {{ request.user.email }}{% endif %}
+    </p>
+    <a href="{% url 'dealer_add_car' %}" class="btn btn-primary mt-3">Add a new car</a>
+  </div>
+
+  <div class="card">
+    <h3>Your Cars</h3>
+    {% if cars %}
+      <div class="table" style="margin-top:10px;">
+        <table class="table">
+          <thead>
+            <tr><th>Title</th><th>Price/day</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for c in cars %}
+              <tr>
+                <td><a href="{% url 'car_detail' c.pk %}">{{ c.title }}</a></td>
+                <td>${{ c.price_per_day }}</td>
+                <td><a class="btn btn-outline" href="{% url 'dealer_update_price' c.pk %}">Update price</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">No cars yet. Add your first car.</p>
+      <a href="{% url 'dealer_add_car' %}" class="btn btn-primary mt-3">Add Car</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
