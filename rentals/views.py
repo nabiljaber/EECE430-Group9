@@ -88,6 +88,35 @@ def dealer_add_car(request):
         form = DealerCarForm()
     return render(request, "dealer/car_form.html", {"form": form, "title": "Add Car"})
 
+# rentals/views.py
+@login_required
+@dealer_required
+def dealer_edit_car(request, pk):
+    dealer = request.user.dealer_profile
+    car = get_object_or_404(Car, pk=pk, dealer=dealer)
+    if request.method == "POST":
+        form = DealerCarForm(request.POST, instance=car)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Car updated.")
+            return redirect("dealer_dashboard")
+    else:
+        form = DealerCarForm(instance=car)
+    return render(request, "dealer/car_form.html", {"form": form, "title": "Edit Car"})
+
+@login_required
+@dealer_required
+def dealer_delete_car(request, pk):
+    dealer = request.user.dealer_profile
+    car = get_object_or_404(Car, pk=pk, dealer=dealer)
+    if request.method == "POST":
+        car.delete()
+        messages.success(request, "Car deleted.")
+        return redirect("dealer_dashboard")
+    # optional confirm page could go here; for now, redirect to dashboard
+    return redirect("dealer_dashboard")
+
+
 
 @login_required
 @dealer_required

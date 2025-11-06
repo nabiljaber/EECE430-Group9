@@ -1,39 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Dealer Dashboard</h1>
+<h1>Dealer dashboard</h1>
 
-<div class="space-y">
-  <div class="card">
-    <h3>{{ dealer.name }}</h3>
-    <p class="meta">
-      Account: {{ request.user.username }}{% if request.user.email %} · {{ request.user.email }}{% endif %}
-    </p>
-    <a href="{% url 'dealer_add_car' %}" class="btn btn-primary mt-3">Add a new car</a>
-  </div>
+<div class="card" style="overflow-x:auto">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Make / Model / Year</th>
+        <th>Color</th>
+        <th>Trans.</th>
+        <th>Seats</th>
+        <th>Price/day</th>
+        <th>Available</th>
+        <th>Added</th>
+        <th class="right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for car in cars %}
+      <tr>
+        <td><a href="{% url 'car_detail' car.id %}">{{ car.title }}</a></td>
+        <td>{{ car.make }} {{ car.model }} {{ car.year }}</td>
+        <td>{{ car.color|default:"—" }}</td>
+        <td>{{ car.get_transmission_display }}</td>
+        <td>{{ car.seats }}</td>
+        <td>{{ car.price_per_day }} {{ car.currency }}</td>
+        <td>{% if car.available %}Yes{% else %}<span class="muted">No</span>{% endif %}</td>
+        <td>{{ car.created_at|date:"Y-m-d" }}</td>
+        <td class="right">
+          <a class="btn btn-secondary" href="{% url 'dealer_edit_car' car.id %}">Edit</a>
+          <form method="post" action="{% url 'dealer_delete_car' car.id %}" style="display:inline">
+            {% csrf_token %}
+            <button class="btn" onclick="return confirm('Delete this car?')" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="muted">No cars yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-  <div class="card">
-    <h3>Your Cars</h3>
-    {% if cars %}
-      <div class="table" style="margin-top:10px;">
-        <table class="table">
-          <thead>
-            <tr><th>Title</th><th>Price/day</th><th></th></tr>
-          </thead>
-          <tbody>
-            {% for c in cars %}
-              <tr>
-                <td><a href="{% url 'car_detail' c.pk %}">{{ c.title }}</a></td>
-                <td>${{ c.price_per_day }}</td>
-                <td><a class="btn btn-outline" href="{% url 'dealer_update_price' c.pk %}">Update price</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="muted">No cars yet. Add your first car.</p>
-      <a href="{% url 'dealer_add_car' %}" class="btn btn-primary mt-3">Add Car</a>
-    {% endif %}
-  </div>
+<div class="mt-3">
+  <a class="btn btn-primary" href="{% url 'dealer_add_car' %}">Add car</a>
 </div>
 {% endblock %}

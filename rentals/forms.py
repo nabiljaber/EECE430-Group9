@@ -7,17 +7,14 @@ from .models import Car, Booking, Dealer
 
 User = get_user_model()
 
-
 # ---------------------------
 # Dealer self-serve signup
 # ---------------------------
 class DealerApplyForm(UserCreationForm):
-    # account fields
     email = forms.EmailField(required=True)
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
 
-    # dealership fields
     dealer_name = forms.CharField(label="Dealership name", max_length=150)
     phone = forms.CharField(label="Phone", max_length=30, required=False)
 
@@ -26,14 +23,12 @@ class DealerApplyForm(UserCreationForm):
         fields = ("username", "email", "first_name", "last_name")
 
     def clean(self):
-        cleaned = super().clean()  # keeps default username/password matching validation
+        cleaned = super().clean()
         p2 = (cleaned.get("password2") or "").strip()
 
-        # Enforce min length
         if p2 and len(p2) < 9:
             self.add_error("password2", "Password must be at least 9 characters long.")
 
-        # Must not include username or (parts of) the person's name
         tokens = [
             (cleaned.get("username") or "").strip(),
             (cleaned.get("first_name") or "").strip(),
@@ -45,7 +40,6 @@ class DealerApplyForm(UserCreationForm):
             if t and len(t) >= 3 and t in p2_lower:
                 self.add_error("password2", "Password cannot contain your name or username.")
                 break
-
         return cleaned
 
     def save(self, commit=True):
@@ -58,28 +52,61 @@ class DealerApplyForm(UserCreationForm):
                 name=self.cleaned_data["dealer_name"],
                 email=user.email,
                 phone=self.cleaned_data.get("phone", ""),
-                active=True,  # set False if you want manual approval
+                active=True,
             )
         return user
 
 
 # ---------------------------
-# Dealer car management
+# Dealer car management (uses Car.available)
 # ---------------------------
 class DealerCarForm(forms.ModelForm):
-    """Used by a dealer to create a car (the view sets car.dealer)."""
+    """Used by a dealer to create/update a car (the view sets car.dealer)."""
     class Meta:
         model = Car
-        fields = ("title", "description", "price_per_day")
+        fields = [
+            "title",
+            "make", "model", "year", "color",
+            "car_type", "transmission",
+            "seats", "doors", "mileage_km",
+            "price_per_day", "currency",
+            "location_city", "location_country",
+            "available",
+        ]
+        labels = {
+            "title": "Listing title",
+            "make": "Make",
+            "model": "Model",
+            "year": "Year",
+            "color": "Color",
+            "car_type": "Car type",
+            "transmission": "Transmission",
+            "seats": "Seats",
+            "doors": "Doors",
+            "mileage_km": "Mileage (km)",
+            "price_per_day": "Price per day",
+            "currency": "Currency",
+            "location_city": "City",
+            "location_country": "Country",
+            "available": "Show this car in search",
+        }
         widgets = {
-            "title": forms.TextInput(attrs={"placeholder": "e.g., Toyota Corolla 2020"}),
-            "description": forms.Textarea(attrs={"rows": 4, "placeholder": "Condition, mileage, features…"}),
-            "price_per_day": forms.NumberInput(attrs={"step": "0.01"}),
+            "title": forms.TextInput(attrs={"placeholder": "e.g. Toyota Corolla 2020"}),
+            "make": forms.TextInput(attrs={"placeholder": "e.g. Toyota"}),
+            "model": forms.TextInput(attrs={"placeholder": "e.g. Corolla"}),
+            "year": forms.NumberInput(attrs={"min": 1980, "max": 2100}),
+            "color": forms.TextInput(attrs={"placeholder": "e.g. White"}),
+            "seats": forms.NumberInput(attrs={"min": 1, "max": 9}),
+            "doors": forms.NumberInput(attrs={"min": 2, "max": 6}),
+            "mileage_km": forms.NumberInput(attrs={"min": 0, "step": 1000}),
+            "price_per_day": forms.NumberInput(attrs={"min": 0, "step": "0.01"}),
+            "currency": forms.TextInput(attrs={"maxlength": 3, "placeholder": "USD"}),
+            "location_city": forms.TextInput(attrs={"placeholder": "e.g. Beirut"}),
+            "location_country": forms.TextInput(attrs={"placeholder": "e.g. Lebanon"}),
         }
 
 
 class PriceForm(forms.ModelForm):
-    """Dealer can update only the price."""
     class Meta:
         model = Car
         fields = ("price_per_day",)
@@ -99,9 +126,7 @@ class BookingForm(forms.ModelForm):
         }
 
 
-# ---------------------------
-# (Optional) Legacy add_car path (keep only if something still imports CarForm)
-# ---------------------------
+# Legacy (kept)
 class CarForm(forms.ModelForm):
     class Meta:
         model = Car

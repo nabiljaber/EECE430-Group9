@@ -51,6 +51,7 @@ class Car(models.Model):
     description = models.TextField(blank=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    color= models.CharField(max_length=30, blank=True)
 
     # Optional extras used by UI/filters
     make = models.CharField(max_length=100, blank=True)   # e.g., Toyota

@@ -16,4 +16,6 @@ urlpatterns = [
     path("dealer/dashboard/", views.dealer_dashboard, name="dealer_dashboard"),
     path("dealer/cars/add/", views.dealer_add_car, name="dealer_add_car"),
     path("dealer/cars/<int:pk>/price/", views.dealer_update_price, name="dealer_update_price"),
+    path("dealer/cars/<int:pk>/edit/", views.dealer_edit_car, name="dealer_edit_car"),
+    path("dealer/cars/<int:pk>/delete/", views.dealer_delete_car, name="dealer_delete_car"),
 ]

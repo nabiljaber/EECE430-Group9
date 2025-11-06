@@ -1,21 +1,91 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ title }}</h1>
-<div class="card">
-  <form method="post" class="space-y auth-form">
+
+<div class="card auth-card" style="max-width:820px;margin-top:14px">
+  <form method="post" class="auth-form">
     {% csrf_token %}
-    <div class="form-row">
-      <div>
-        <label>Title</label>{{ form.title }}
+
+    <fieldset>
+      <legend>Basic information</legend>
+      <div class="form-row">
+        <div>
+          <label for="{{ form.title.id_for_label }}">Listing title</label>
+          {{ form.title }} {{ form.title.errors }}
+        </div>
+        <div>
+          <label for="{{ form.available.id_for_label }}">Visibility</label>
+          {{ form.available }}
+          <div class="helptext">If checked, the car appears in search.</div>
+          {{ form.available.errors }}
+        </div>
       </div>
-      <div>
-        <label>Price / day (USD)</label>{{ form.price_per_day }}
+    </fieldset>
+
+    <fieldset>
+      <legend>Specifications</legend>
+      <div class="form-row">
+        <div>
+          <label>Make</label> {{ form.make }} {{ form.make.errors }}
+        </div>
+        <div>
+          <label>Model</label> {{ form.model }} {{ form.model.errors }}
+        </div>
       </div>
-    </div>
-    <label>Description</label>{{ form.description }}
+      <div class="form-row">
+        <div>
+          <label>Year</label> {{ form.year }} {{ form.year.errors }}
+        </div>
+        <div>
+          <label>Color</label> {{ form.color }} {{ form.color.errors }}
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Car type</label> {{ form.car_type }} {{ form.car_type.errors }}
+        </div>
+        <div>
+          <label>Transmission</label> {{ form.transmission }} {{ form.transmission.errors }}
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Seats</label> {{ form.seats }} {{ form.seats.errors }}
+        </div>
+        <div>
+          <label>Doors</label> {{ form.doors }} {{ form.doors.errors }}
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Mileage (km)</label> {{ form.mileage_km }} {{ form.mileage_km.errors }}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Pricing & location</legend>
+      <div class="form-row">
+        <div>
+          <label>Price per day</label> {{ form.price_per_day }} {{ form.price_per_day.errors }}
+        </div>
+        <div>
+          <label>Currency</label> {{ form.currency }} {{ form.currency.errors }}
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>City</label> {{ form.location_city }} {{ form.location_city.errors }}
+        </div>
+        <div>
+          <label>Country</label> {{ form.location_country }} {{ form.location_country.errors }}
+        </div>
+      </div>
+    </fieldset>
+
     <div class="auth-actions">
       <a class="btn btn-outline" href="{% url 'dealer_dashboard' %}">Cancel</a>
-      <button class="btn btn-primary">Save</button>
+      <button class="btn btn-primary" type="submit">Save car</button>
     </div>
   </form>
 </div>
