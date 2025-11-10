@@ -43,17 +43,23 @@ body.site{
   border-bottom:1px solid var(--line-2);
   background:rgba(11,15,20,.6); backdrop-filter:blur(6px);
 }
-.header-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand-logo{width:28px;height:28px;display:block} /* logo now visible */
-.brand-name{font-weight:700;letter-spacing:.2px;color:var(--ink)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand-logo{width:48px;height:48px;display:block}
+.brand-name{font-weight:800;letter-spacing:.3px;color:var(--brand-ink);font-size:20px;
+  background:linear-gradient(90deg,#eaf1ff,#a9c6ff);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;}
 .main-nav a{color:var(--ink-2);margin-left:16px;text-decoration:none}
 .main-nav a:hover{color:#fff}
 .main-nav .btn{margin-left:12px}
+.main-nav a.active-link{ color:#fff; position:relative; }
+.main-nav a.active-link::after{ content:""; position:absolute; left:0; right:0; bottom:-8px; height:2px; background: var(--brand); border-radius:2px; }
 
 /* ====== Footer =========================================================== */
 .site-footer{border-top:1px solid var(--line-2);margin-top:48px}
-.footer-inner{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.footer-inner{display:flex;align-items:center;justify-content:center;padding:18px 0}
+.site-footer .muted{color:var(--ink-2)}
 .muted{color:var(--muted)}
 
 /* ====== Typography & Links ============================================== */
@@ -126,13 +132,30 @@ fieldset{border:1px dashed var(--line);border-radius:10px;padding:12px;margin:10
 .auth-divider::before,.auth-divider::after{content:"";height:1px;background:var(--line)}
 
 /* ====== Alerts / Messages =============================================== */
-.alert{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2)}
+.alert{
+  padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+  background:var(--panel-2);
+  opacity:1; transform: translateY(0);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.alert.fade-out{ opacity:0; transform: translateY(-4px); }
 .alert.error{background:var(--danger-bg);border-color:var(--danger-line);color:var(--danger-ink)}
 .alert.success{background:var(--success-bg);border-color:var(--success-line);color:var(--success-ink)}
 
 /* ====== Home / Sections ================================================== */
-.hero{padding:28px;background:linear-gradient(180deg,rgba(41,98,255,.08),transparent);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:18px}
-.hero h1{margin:0 0 6px}
+/* Masthead */
+.mast-hero{position:relative;margin-bottom:18px}
+.mast-inner{padding:28px 0 8px}
+.mast-title{font-size:clamp(1.6rem,3vw,2rem);margin:0 0 6px}
+.mast-sub{color:var(--ink-2);margin:0 0 10px}
+.mast-badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-2);font-size:12px}
+.mast-hero::before{
+  content:""; position:absolute; inset:-40px 0 auto 0; height:180px;
+  background:radial-gradient(60% 80% at 20% 50%, rgba(41,98,255,.2), transparent 60%),
+             radial-gradient(40% 60% at 80% 20%, rgba(102,163,255,.15), transparent 60%);
+  filter:blur(20px); pointer-events:none;
+}
 
 /* ====== Car List / Detail =============================================== */
 .list-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
@@ -211,25 +234,41 @@ fieldset{border:1px dashed var(--line);border-radius:10px;padding:12px;margin:10
 .car-card .title{ margin:0 0 4px; }
 .car-card .meta{ color: var(--muted); font-size:14px; }
 .car-card .price{ margin-top:6px; }
+.car-card:hover{ box-shadow: 0 12px 34px rgba(0,0,0,.35); transform: translateY(-1px); transition: box-shadow .2s ease, transform .1s ease; }
 
 /* Detail page */
 .detail-hero{ width:100%; height:380px; object-fit:cover; border-radius:12px; }
 .price-lg{ font-size:20px; margin-bottom:10px; }
 
 /* Toolbar (browse page filters) */
-.list-toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.list-toolbar{ display:block; margin-bottom:12px; }
+.list-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; }
+.sort-form{ display:flex; align-items:center; gap:10px; }
+.seg{ display:inline-flex; border:1px solid #2b384d; border-radius:12px; overflow:hidden; background:#0f1722; }
+.seg-btn{ padding:8px 12px; border:0; background:transparent; color:var(--ink-2); cursor:pointer; font-weight:600; }
+.seg-btn + .seg-btn{ border-left:1px solid #2b384d; }
+.seg-btn.active{ background:#1e2b40; color:#fff; }
+.filters{ display:block; }
+.filter-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+.filter-grid>div{ min-width:0; }
+.filter-actions{ display:flex; align-items:end; }
+.filter-buttons{ display:flex; gap:10px; }
+@media (max-width: 900px){ .filter-grid{ grid-template-columns:1fr 1fr; } }
+.active-filters{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
+.chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); font-size:12px; color:var(--ink-2); }
 .filters{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
 
 /* --- Europcar-like hero panel --- */
 .eu-hero { margin-top: 8px; }
-.eu-hero-inner { background:#0e141b; border:1px solid var(--line); padding:16px; }
+.eu-hero-inner { background:linear-gradient(180deg, rgba(41,98,255,.06), transparent), #0e141b; border:1px solid var(--line); padding:16px; border-radius: var(--radius-lg); box-shadow: var(--shadow); }
 .eu-tabs { display:flex; gap:10px; margin-bottom:12px; }
 .eu-tab { padding:10px 14px; border-radius:10px; border:1px solid #2b384d; background:#0f1722; color:var(--ink-2); cursor:pointer; }
 .eu-tab.active { background:#1e2b40; color:#fff; border-color:#3a4a64; }
-.eu-form .eu-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:12px; }
+.eu-form .eu-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr; gap:12px; }
 .eu-cell label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
 .eu-cell-2 { grid-column: span 2; }
-.eu-search { display:block; width:100%; padding:12px 16px; border-radius:10px; border:0; background:#ffd21f; color:#111; font-weight:800; cursor:pointer; }
+.eu-search { display:block; width:100%; padding:14px 18px; border-radius:12px; border:0; background:var(--brand); color:#fff; font-weight:800; cursor:pointer; box-shadow: 0 6px 18px rgba(41,98,255,.25); }
+.eu-search:hover{ filter: brightness(1.05); }
 .eu-mini { display:flex; gap:18px; margin-top:10px; color:var(--ink-2); }
 .eu-check { display:flex; align-items:center; gap:8px; }
 @media (max-width: 900px){
@@ -237,15 +276,32 @@ fieldset{border:1px dashed var(--line);border-radius:10px;padding:12px;margin:10
   .eu-cell-2 { grid-column: auto; }
 }
 
-/* Make main fill the viewport so promos can sit at bottom */
-.site-main{
-  min-height: calc(100vh - 64px - 76px); /* header + footer heights */
-  display: flex;
-  flex-direction: column;
+/* Browse hero: colorful search input */
+.eu-search-input{
+  background: linear-gradient(180deg,#0f1722,#0b1420);
+  border:1px solid #3a4a64;
+  color: var(--brand-ink);
+}
+.eu-search-input::placeholder{ color:#8ea4c7; opacity:.95; }
+.eu-search-input:focus{
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(41,98,255,.25);
 }
 
-/* Push promos to the bottom of main content */
-.promos{ margin-top: auto; }
+/* Pagination */
+.pagination{ display:flex; gap:8px; justify-content:center; margin:16px 0 0; }
+.page-btn{ padding:8px 12px; border-radius:10px; border:1px solid #2b384d; background:#0f1722; color:var(--ink-2); text-decoration:none; }
+.page-btn:hover{ background:#1b293b; color:#fff; }
+.page-btn.active{ background:#1e2b40; color:#fff; border-color:#3a4a64; }
+.page-btn.disabled{ opacity:.5; pointer-events:none; }
+
+/* Mini calendar for dealer */
+.mini-cal{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+.mini-cal .dow{ text-align:center; color: var(--muted); font-size:12px; }
+.mini-cal .day{ text-align:center; padding:8px 0; border-radius:8px; border:1px solid var(--line); background:#101826; color:var(--ink-2); }
+.mini-cal .day.dim{ opacity:.45; }
+.mini-cal .day.today{ border-color: var(--brand); }
+.mini-cal .day.booked{ background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger-ink); }
 
 /* Side-by-side layout for the three promo cards */
 .promos-grid{

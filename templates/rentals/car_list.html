@@ -1,36 +1,90 @@
-<<<<<<< HEAD
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
 
-<h1>Browse Cars</h1>
-
-<div class="card list-toolbar">
-  <form method="get" class="filters">
-    <input type="text" name="q" placeholder="Search by title, city…" value="{{ q }}">
-    <select name="type">
-      <option value="">Any type</option>
-      <option value="sedan" {% if type == 'sedan' %}selected{% endif %}>Sedan</option>
-      <option value="suv"   {% if type == 'suv' %}selected{% endif %}>SUV</option>
-      <option value="hatch" {% if type == 'hatch' %}selected{% endif %}>Hatchback</option>
-      <option value="van"   {% if type == 'van' %}selected{% endif %}>Van</option>
-    </select>
-    <button class="btn">Apply</button>
+<div class="list-head">
+  <div>
+    <h1>Browse Cars</h1>
+    {% if q or make or min_price or max_price or type %}
+      <div class="muted">{{ result_count }} result{% if result_count != 1 %}s{% endif %}</div>
+    {% endif %}
+  </div>
+  <form method="get" class="sort-form">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="make" value="{{ make }}">
+    <input type="hidden" name="min_price" value="{{ min_price }}">
+    <input type="hidden" name="max_price" value="{{ max_price }}">
+    <input type="hidden" name="type" value="{{ type }}">
+    <div class="seg">
+      <button class="seg-btn {% if sort == 'newest' %}active{% endif %}" type="submit" name="sort" value="newest">Newest</button>
+      <button class="seg-btn {% if sort == 'price_low' %}active{% endif %}" type="submit" name="sort" value="price_low">$ Low</button>
+      <button class="seg-btn {% if sort == 'price_high' %}active{% endif %}" type="submit" name="sort" value="price_high">$ High</button>
+    </div>
   </form>
-</div>
+  </div>
+
+<section class="eu-hero">
+  <div class="eu-hero-inner">
+  <form method="get" class="eu-form">
+    <div class="eu-grid">
+      <div>
+        <label>Search</label>
+        <input type="text" name="q" class="eu-search-input" placeholder="Name or manufacturer" value="{{ q }}">
+      </div>
+      <div>
+        <label>Manufacturer</label>
+        <input type="text" name="make" placeholder="e.g. Toyota" value="{{ make }}">
+      </div>
+      <div>
+        <label>Min price</label>
+        <input type="number" name="min_price" step="1" min="0" placeholder="0" value="{{ min_price }}">
+      </div>
+      <div>
+        <label>Max price</label>
+        <input type="number" name="max_price" step="1" min="0" placeholder="100" value="{{ max_price }}">
+      </div>
+      <div>
+        <label>Type</label>
+        <select name="type">
+          <option value="">Any type</option>
+          <option value="sedan" {% if type == 'sedan' %}selected{% endif %}>Sedan</option>
+          <option value="suv"   {% if type == 'suv' %}selected{% endif %}>SUV</option>
+          <option value="hatch" {% if type == 'hatch' %}selected{% endif %}>Hatchback</option>
+          <option value="van"   {% if type == 'van' %}selected{% endif %}>Van</option>
+        </select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="eu-search" type="submit">Search</button>
+      </div>
+    </div>
+  </form>
+  </div>
+  {% if q or make or min_price or max_price or type %}
+    <div class="active-filters">
+      <span class="muted">Active:</span>
+      {% if q %}<span class="chip">Search: {{ q }}</span>{% endif %}
+      {% if make %}<span class="chip">Make: {{ make }}</span>{% endif %}
+      {% if min_price %}<span class="chip">Min: ${{ min_price }}</span>{% endif %}
+      {% if max_price %}<span class="chip">Max: ${{ max_price }}</span>{% endif %}
+      {% if type %}<span class="chip">Type: {{ type|title }}</span>{% endif %}
+      <a class="btn btn-outline" style="margin-left:auto" href="{% url 'car_list' %}">Reset</a>
+    </div>
+  {% endif %}
+</section>
 
 {% if cars %}
   <div class="grid cards-3">
     {% for car in cars %}
       <article class="car-card card">
         <a class="thumb" href="{% url 'car_detail' car.pk %}">
-          <img src="{% static 'img/car-placeholder.jpg' %}" alt="{{ car.title }}">
+          <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ car.title }}">
         </a>
         <div class="body">
           <h3 class="title"><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>
           <div class="meta">
-            {{ car.get_car_type_display }}
-            {% if car.year %} · {{ car.year }}{% endif %}
+            {{ car.get_car_type_display }}{% if car.year %} · {{ car.year }}{% endif %}
+            {% if car.make or car.model %} · {{ car.make }} {{ car.model }}{% endif %}
           </div>
           <div class="price"><strong>${{ car.price_per_day }}</strong> / day</div>
           <a class="btn btn-secondary btn-block mt-3" href="{% url 'car_detail' car.pk %}">View details</a>
@@ -38,31 +92,31 @@
       </article>
     {% endfor %}
   </div>
+  {% if page.paginator.num_pages > 1 %}
+    <div class="pagination">
+      {% if page.has_previous %}
+        <a class="page-btn" href="?{{ base_qs_prefix }}page={{ page.previous_page_number }}">Prev</a>
+      {% else %}
+        <span class="page-btn disabled">Prev</span>
+      {% endif %}
+
+      {% for i in page.paginator.page_range %}
+        {% if i == page.number %}
+          <span class="page-btn active">{{ i }}</span>
+        {% else %}
+          <a class="page-btn" href="?{{ base_qs_prefix }}page={{ i }}">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page.has_next %}
+        <a class="page-btn" href="?{{ base_qs_prefix }}page={{ page.next_page_number }}">Next</a>
+      {% else %}
+        <span class="page-btn disabled">Next</span>
+      {% endif %}
+    </div>
+  {% endif %}
 {% else %}
   <p class="muted">No cars match your filters.</p>
 {% endif %}
 
-=======
-{% extends "base.html" %}{% block content %}
-<h2>Browse Cars</h2>
-<form method="get" class="filters">
-  <input name="q" placeholder="Search..." value="{{ q }}">
-  <select name="type">
-    <option value="">All Types</option>
-    <option value="sedan" {% if type=='sedan' %}selected{% endif %}>Sedan</option>
-    <option value="suv"   {% if type=='suv' %}selected{% endif %}>SUV</option>
-    <option value="hatch" {% if type=='hatch' %}selected{% endif %}>Hatchback</option>
-    <option value="van"   {% if type=='van' %}selected{% endif %}>Van</option>
-  </select>
-  <button type="submit">Filter</button>
-</form>
-<div class="grid">
-{% for car in cars %}
-  <div class="card">
-    <h3><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>
-    <p>{{ car.get_car_type_display }} · ${{ car.price_per_day }} /day</p>
-  </div>
-{% empty %}<p>No cars found.</p>{% endfor %}
-</div>
->>>>>>> 75f6ec464013ed4df1d1158a123edad786a0c61a
 {% endblock %}

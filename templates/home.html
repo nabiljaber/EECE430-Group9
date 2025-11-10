@@ -2,44 +2,59 @@
 {% load static %}
 {% block content %}
 
-<!-- HERO PANEL -->
-<section class="eu-hero">
-  <div class="eu-hero-inner card">
-    <div class="eu-tabs">
-      <button type="button" class="eu-tab active" data-type="">Cars</button>
-      <button type="button" class="eu-tab" data-type="van">Vans & Trucks</button>
+<!-- MASTHEAD -->
+<section class="mast-hero">
+  <div class="mast-inner">
+    <div>
+      <h1 class="mast-title">Find your perfect ride</h1>
+      <p class="mast-sub">Compare cars from trusted local dealers. Clear pricing. No surprises.</p>
+      <div class="mast-badges">
+        <span class="badge">Free cancellation</span>
+        <span class="badge">No hidden fees</span>
+        <span class="badge">24/7 support</span>
+      </div>
     </div>
+  </div>
 
-    <form action="{% url 'car_list' %}" method="get" class="eu-form" id="euSearch">
-      <input type="hidden" name="type" id="euType" value="">
-      <div class="eu-grid">
-        <div class="eu-cell eu-cell-2">
-          <label>Pickup and return location</label>
-          <input name="q" placeholder="City, address, point of interest" value="{{ request.GET.q }}">
-        </div>
-        <div class="eu-cell">
-          <label>Pick up date</label>
-          <input type="date" name="start">
-        </div>
-        <div class="eu-cell">
-          <label>Return date</label>
-          <input type="date" name="end">
-        </div>
-        <div class="eu-cell">
-          <label>&nbsp;</label>
-          <button class="eu-search">Search</button>
-        </div>
+  <!-- SEARCH PANEL -->
+  <div class="eu-hero">
+    <div class="eu-hero-inner">
+      <div class="eu-tabs">
+        <button type="button" class="eu-tab active" data-type="">Cars</button>
+        <button type="button" class="eu-tab" data-type="van">Vans & Trucks</button>
       </div>
 
-      <div class="eu-mini">
-        <label class="eu-check">
-          <input type="checkbox" checked> Same return location
-        </label>
-        <label class="eu-check">
-          <input type="checkbox"> I have a negotiated rate
-        </label>
-      </div>
-    </form>
+      <form action="{% url 'car_list' %}" method="get" class="eu-form" id="euSearch">
+        <input type="hidden" name="type" id="euType" value="">
+        <div class="eu-grid">
+          <div class="eu-cell eu-cell-2">
+            <label>Pickup and return location</label>
+            <input name="q" placeholder="City, address, point of interest" value="{{ request.GET.q }}">
+          </div>
+          <div class="eu-cell">
+            <label>Pick up date</label>
+            <input type="date" name="start">
+          </div>
+          <div class="eu-cell">
+            <label>Return date</label>
+            <input type="date" name="end">
+          </div>
+          <div class="eu-cell">
+            <label>&nbsp;</label>
+            <button class="eu-search">Search</button>
+          </div>
+        </div>
+
+        <div class="eu-mini">
+          <label class="eu-check">
+            <input type="checkbox" checked> Same return location
+          </label>
+          <label class="eu-check">
+            <input type="checkbox"> I have a negotiated rate
+          </label>
+        </div>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -51,7 +66,7 @@
       {% for c in cars %}
         <article class="car-card card">
           <a class="thumb" href="{% url 'car_detail' c.pk %}">
-            <img src="{% static 'img/car-placeholder.jpg' %}" alt="{{ c.title }}">
+            <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ c.title }}">
           </a>
           <div class="body">
             <h3 class="title"><a href="{% url 'car_detail' c.pk %}">{{ c.title }}</a></h3>

@@ -17,22 +17,28 @@
         <span class="brand-name">{{ SITE_NAME }}</span>
       </a>
 
-      <nav class="main-nav">
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'car_list' %}">Browse Cars</a>
+      {% url 'home' as home_url %}
+      {% url 'car_list' as browse_url %}
+      <nav class="main-nav" aria-label="Main">
+        <a href="{{ home_url }}" class="{% if request.path == home_url %}active-link{% endif %}">Home</a>
+        <a href="{{ browse_url }}" class="{% if request.path|slice:':9' == '/rentals/' %}active-link{% endif %}">Browse Cars</a>
 
-        {# Dealer Dashboard link (only for active dealers) #}
-        {% if user.is_authenticated and user.dealer_profile and user.dealer_profile.active %}
-          <a href="{% url 'dealer_dashboard' %}">Dealer Dashboard</a>
-        {% endif %}
-
-        {# Show "Become a dealer" if user is not an active dealer (no parentheses) #}
-        {% if not user.is_authenticated or not user.dealer_profile or not user.dealer_profile.active %}
+        {# Role-aware dashboard link #}
+        {% if user.is_authenticated %}
+          {% if user.dealer_profile and user.dealer_profile.active %}
+            {% url 'dealer_dashboard' as dealer_url %}
+            <a href="{{ dealer_url }}" class="{% if dealer_url in request.path %}active-link{% endif %}">Dealer Dashboard</a>
+          {% else %}
+            {% url 'account_dashboard' as account_url %}
+            <a href="{{ account_url }}" class="{% if account_url in request.path %}active-link{% endif %}">My Dashboard</a>
+            <a href="{% url 'dealer_apply' %}">Become a dealer</a>
+          {% endif %}
+        {% else %}
           <a href="{% url 'dealer_apply' %}">Become a dealer</a>
         {% endif %}
 
         {% if user.is_authenticated %}
-          {# Staff-only Add Car (optional; dealers add via Dealer Dashboard) #}
+          {# Optional: staff-only quick Add Car (dealers add via dashboard) #}
           {% if user.is_staff or user.is_superuser %}
             <a href="{% url 'add_car' %}" class="btn btn-outline">Add Car</a>
           {% endif %}
@@ -74,12 +80,21 @@
     </div>
   </header>
 
+  {# ==== GLOBAL MESSAGES (green success window etc.) ==== #}
+  {% if messages %}
+    <div class="container messages" role="status" aria-live="polite">
+      {% for message in messages %}
+        <div class="alert {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <main class="site-main container">
     {% block content %}{% endblock %}
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner" style="justify-content:flex-end;">
+    <div class="container footer-inner">
       <div class="muted">© {{ SITE_NAME }} {% now "Y" %}. All rights reserved.</div>
     </div>
   </footer>
@@ -96,8 +111,23 @@
         if (willOpen) { menu.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
         else { close(); }
       });
-      document.addEventListener('click', (e)=>{ if(menu.classList.contains('open') && !menu.contains(e.target) && e.target!==btn) close(); });
+      document.addEventListener('click', (e)=>{
+        if(menu.classList.contains('open') && !menu.contains(e.target) && e.target!==btn) close();
+      });
       document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
+    })();
+  </script>
+  <script>
+    // Auto-fade Django messages after 5 seconds
+    (function(){
+      const alerts = document.querySelectorAll('.messages .alert');
+      alerts.forEach((el)=>{
+        const timeoutMs = 5000; // 5 seconds visible
+        setTimeout(()=>{
+          el.classList.add('fade-out');
+          setTimeout(()=>{ el.remove(); }, 650); // wait for transition
+        }, timeoutMs);
+      });
     })();
   </script>
 

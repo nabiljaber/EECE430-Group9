@@ -9,6 +9,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .models import Car, Dealer, Booking
+from django.db.models import Q, Sum, Count
+from django.core.paginator import Paginator
+from urllib.parse import urlencode
+import calendar
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from .forms import BookingForm, DealerCarForm, PriceForm, DealerApplyForm
 
 
@@ -22,14 +28,71 @@ def home(request):
 
 
 def car_list(request):
-    qs = Car.objects.filter(available=True).order_by("-created_at")
-    q = request.GET.get("q", "")
-    t = request.GET.get("type", "")
+    qs = Car.objects.filter(available=True)
+
+    # Text search: name/title or manufacturer (make)
+    q = (request.GET.get("q") or "").strip()
+    make = (request.GET.get("make") or "").strip()
+
     if q:
-        qs = qs.filter(title__icontains=q)
+        qs = qs.filter(Q(title__icontains=q) | Q(make__icontains=q))
+    if make:
+        qs = qs.filter(make__icontains=make)
+
+    # Type filter
+    t = (request.GET.get("type") or "").strip()
     if t:
         qs = qs.filter(car_type=t)
-    return render(request, "rentals/car_list.html", {"cars": qs, "q": q, "type": t})
+
+    # Price range filters
+    min_price_raw = (request.GET.get("min_price") or "").strip()
+    max_price_raw = (request.GET.get("max_price") or "").strip()
+    try:
+        if min_price_raw:
+            qs = qs.filter(price_per_day__gte=Decimal(min_price_raw))
+    except (InvalidOperation, ValueError):
+        pass
+    try:
+        if max_price_raw:
+            qs = qs.filter(price_per_day__lte=Decimal(max_price_raw))
+    except (InvalidOperation, ValueError):
+        pass
+
+    # Sorting
+    sort = (request.GET.get("sort") or "newest").strip()
+    if sort == "price_low":
+        qs = qs.order_by("price_per_day", "-created_at")
+    elif sort == "price_high":
+        qs = qs.order_by("-price_per_day", "-created_at")
+    else:
+        sort = "newest"
+    qs = qs.order_by("-created_at")
+
+    # Pagination (12 per page)
+    paginator = Paginator(qs, 12)
+    page_num = request.GET.get("page") or 1
+    page = paginator.get_page(page_num)
+
+    # Base querystring without page for cleaner pagination links
+    qd = request.GET.copy()
+    qd.pop("page", None)
+    base_qs = urlencode(list(qd.lists()), doseq=True)
+    base_qs_prefix = (base_qs + "&") if base_qs else ""
+
+    context = {
+        "cars": page.object_list,
+        "q": q,
+        "type": t,
+        "make": make,
+        "min_price": min_price_raw,
+        "max_price": max_price_raw,
+        "sort": sort,
+        "result_count": paginator.count,
+        "page": page,
+        "base_qs": base_qs,
+        "base_qs_prefix": base_qs_prefix,
+    }
+    return render(request, "rentals/car_list.html", context)
 
 
 def car_detail(request, pk):
@@ -48,14 +111,19 @@ def _require_dealer(user) -> bool:
 
 
 def dealer_required(view_fn):
-    """Decorator to ensure only authenticated, active dealers can access."""
+    """Decorator to ensure only authenticated, active dealers can access.
+
+    UX: if the user is logged in but not a dealer, redirect to the dealer
+    application page with a friendly message instead of a 403 page.
+    """
     @wraps(view_fn)
     def _wrapped(request, *args, **kwargs):
         if not request.user.is_authenticated:
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(next=request.get_full_path())
         if not _require_dealer(request.user):
-            raise PermissionDenied("Dealer access required.")
+            messages.info(request, "Dealer access required. Apply to become a dealer.")
+            return redirect("dealer_apply")
         return view_fn(request, *args, **kwargs)
     return _wrapped
 
@@ -68,8 +136,88 @@ def dealer_required(view_fn):
 @dealer_required
 def dealer_dashboard(request):
     dealer = request.user.dealer_profile
-    cars = dealer.cars.order_by("-id")
-    return render(request, "dealer/dashboard.html", {"dealer": dealer, "cars": cars})
+    cars = list(dealer.cars.order_by("-id"))
+
+    # Metrics for current month
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+    # Naive month end calculation
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year+1, month=1, day=1)
+    else:
+        month_end = month_start.replace(month=month_start.month+1, day=1)
+
+    month_bookings = (
+        Booking.objects
+        .filter(car__dealer=dealer,
+                start_date__gte=month_start,
+                start_date__lt=month_end,
+                status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED])
+    )
+    metrics = month_bookings.aggregate(
+        bookings_count=Count("id"),
+        revenue=Sum("total_price")
+    )
+
+    # Availability info per car (current status and next booking window)
+    for car in cars:
+        current = Booking.objects.filter(
+            car=car,
+            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
+            start_date__lte=today,
+            end_date__gte=today,
+        ).order_by("start_date").first()
+        next_b = (
+            Booking.objects
+            .filter(car=car,
+                    status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
+                    start_date__gt=today)
+            .order_by("start_date")
+            .first()
+        )
+        # attach for easy template access without custom tags
+        car.current_booking = current
+        car.next_booking = next_b
+
+        # Build a mini calendar (current month) with booked days highlighted
+        month_weeks = calendar.Calendar(firstweekday=0).monthdatescalendar(month_start.year, month_start.month)
+        # Ranges overlapping the month
+        ranges = list(Booking.objects.filter(
+            car=car,
+            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
+            end_date__gte=month_start,
+            start_date__lt=month_end,
+        ).values("start_date", "end_date"))
+
+        weeks = []
+        for week in month_weeks:
+            row = []
+            for d in week:
+                in_month = (d.month == month_start.month)
+                booked = False
+                if in_month:
+                    for r in ranges:
+                        if r["start_date"] <= d <= r["end_date"]:
+                            booked = True
+                            break
+                row.append({
+                    "date": d,
+                    "in_month": in_month,
+                    "booked": booked,
+                    "today": d == today,
+                })
+            weeks.append(row)
+        car.calendar_weeks = weeks
+
+    context = {
+        "dealer": dealer,
+        "cars": cars,
+        "metrics": metrics,
+        "month_start": month_start,
+        "today": today,
+        "month_bookings": month_bookings.select_related("car", "user").order_by("start_date"),
+    }
+    return render(request, "dealer/dashboard.html", context)
 
 
 @login_required
