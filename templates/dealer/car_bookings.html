@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+
+<a class="btn btn-outline mb-3" href="{% url 'dealer_dashboard' %}">&larr; Back to dashboard</a>
+
+<div class="card">
+  <h1>{{ car.title }} &middot; My Bookings</h1>
+  <p class="muted">Review, confirm, or reject reservations and keep an eye on the live calendar for this vehicle.</p>
+</div>
+
+<div class="grid mt-3" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+  <div class="card" id="calendar">
+    <h2>Calendar &mdash; {{ calendar_month_start|date:"F Y" }}</h2>
+    <div class="mini-cal mt-2">
+      <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+      {% for week in car.calendar_weeks %}
+        {% for d in week %}
+          <div class="day{% if not d.in_month %} dim{% endif %}{% if d.booked %} booked{% endif %}{% if d.today %} today{% endif %}">
+            {{ d.date.day }}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    <p class="muted" style="font-size:12px;margin-top:8px;">Green = available &nbsp;&nbsp; Red = reserved</p>
+  </div>
+
+  <div class="card">
+    <h2>Upcoming trips</h2>
+    {% if car.upcoming_bookings %}
+      <ul style="list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;">
+        {% for booking in car.upcoming_bookings %}
+          <li style="border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;gap:12px;">
+              <div>
+                <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong>
+                <div class="muted">{{ booking.start_date }} - {{ booking.end_date }}</div>
+              </div>
+              <span class="chip">{{ booking.status|title }}</span>
+            </div>
+            <div class="muted" style="margin-top:6px;">${{ booking.total_price|default:0 }}</div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+              {% if booking.status|lower == "pending" %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                  <input type="hidden" name="action" value="confirm">
+                  <button class="btn btn-primary btn-sm">Confirm</button>
+                </form>
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                  <input type="hidden" name="action" value="reject">
+                  <button class="btn btn-outline btn-sm">Reject</button>
+                </form>
+              {% endif %}
+              {% if booking.user.email %}
+                <a class="btn btn-secondary btn-sm" href="mailto:{{ booking.user.email }}?subject=Booking for {{ car.title }}">Message</a>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted" style="margin-top:12px;">No upcoming trips yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-3" style="overflow-x:auto;">
+  {% if bookings %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Dates</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+          <tr>
+            <td>{{ booking.user.get_full_name|default:booking.user.username }}</td>
+            <td>{{ booking.start_date }} - {{ booking.end_date }}</td>
+            <td>{{ booking.status|title }}</td>
+            <td>${{ booking.total_price|default:0 }}</td>
+            <td>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                {% if booking.status|lower == "pending" %}
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <input type="hidden" name="action" value="confirm">
+                    <button class="btn btn-primary btn-sm">Confirm</button>
+                  </form>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button class="btn btn-outline btn-sm">Reject</button>
+                  </form>
+                {% else %}
+                  <span class="muted">Already {{ booking.status|title }}</span>
+                {% endif %}
+                {% if booking.user.email %}
+                  <a class="btn btn-secondary btn-sm" href="mailto:{{ booking.user.email }}?subject=Booking for {{ car.title }}">Message</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">No historical bookings for this car.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

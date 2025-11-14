@@ -17,6 +17,8 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from .forms import BookingForm, DealerCarForm, PriceForm, DealerApplyForm
 
+ACTIVE_BOOKING_STATUSES = [Booking.Status.PENDING, Booking.Status.CONFIRMED]
+
 
 # ---------------------------
 # Public pages
@@ -28,16 +30,19 @@ def home(request):
 
 
 def car_list(request):
-    qs = Car.objects.filter(available=True)
+    qs = Car.objects.filter(available=True).select_related("dealer")
 
     # Text search: name/title or manufacturer (make)
     q = (request.GET.get("q") or "").strip()
     make = (request.GET.get("make") or "").strip()
+    dealer_name = (request.GET.get("dealer") or "").strip()
 
     if q:
         qs = qs.filter(Q(title__icontains=q) | Q(make__icontains=q))
     if make:
         qs = qs.filter(make__icontains=make)
+    if dealer_name:
+        qs = qs.filter(dealer__name__icontains=dealer_name)
 
     # Type filter
     t = (request.GET.get("type") or "").strip()
@@ -79,11 +84,14 @@ def car_list(request):
     base_qs = urlencode(list(qd.lists()), doseq=True)
     base_qs_prefix = (base_qs + "&") if base_qs else ""
 
+    dealer_options = Dealer.objects.filter(active=True).order_by("name").values_list("name", flat=True)
+
     context = {
         "cars": page.object_list,
         "q": q,
         "type": t,
         "make": make,
+        "dealer_name": dealer_name,
         "min_price": min_price_raw,
         "max_price": max_price_raw,
         "sort": sort,
@@ -91,6 +99,7 @@ def car_list(request):
         "page": page,
         "base_qs": base_qs,
         "base_qs_prefix": base_qs_prefix,
+        "dealer_options": dealer_options,
     }
     return render(request, "rentals/car_list.html", context)
 
@@ -98,7 +107,23 @@ def car_list(request):
 def car_detail(request, pk):
     car = get_object_or_404(Car, pk=pk)
     form = BookingForm()
-    return render(request, "rentals/car_detail.html", {"car": car, "form": form})
+    today = timezone.localdate()
+    month_start, month_end = _month_bounds(today)
+    _attach_car_schedule(
+        car,
+        month_start=month_start,
+        month_end=month_end,
+        today=today,
+        upcoming_limit=5,
+    )
+    context = {
+        "car": car,
+        "form": form,
+        "calendar_month_start": month_start,
+        "today": today,
+        "upcoming_bookings": getattr(car, "upcoming_bookings", []),
+    }
+    return render(request, "rentals/car_detail.html", context)
 
 
 # ---------------------------
@@ -128,6 +153,67 @@ def dealer_required(view_fn):
     return _wrapped
 
 
+def _month_bounds(anchor=None):
+    """Return the first day of the month and the first day of the next month."""
+    anchor = anchor or timezone.localdate()
+    month_start = anchor.replace(day=1)
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year + 1, month=1, day=1)
+    else:
+        month_end = month_start.replace(month=month_start.month + 1, day=1)
+    return month_start, month_end
+
+
+def _attach_car_schedule(car, *, month_start, month_end, today, upcoming_limit=3):
+    """Attach availability info (current/next booking and calendar weeks) to a car."""
+    base_qs = (
+        Booking.objects
+        .filter(car=car, status__in=ACTIVE_BOOKING_STATUSES)
+        .select_related("user")
+    )
+    current = base_qs.filter(
+        start_date__lte=today,
+        end_date__gte=today,
+    ).order_by("start_date").first()
+    next_b = base_qs.filter(start_date__gt=today).order_by("start_date").first()
+    upcoming_qs = base_qs.filter(start_date__gte=today).order_by("start_date")
+    if upcoming_limit is not None:
+        upcoming_qs = upcoming_qs[:upcoming_limit]
+    upcoming = list(upcoming_qs)
+    ranges = list(
+        base_qs.filter(
+            end_date__gte=month_start,
+            start_date__lt=month_end,
+        ).values("start_date", "end_date")
+    )
+
+    weeks = []
+    for week in calendar.Calendar(firstweekday=0).monthdatescalendar(month_start.year, month_start.month):
+        row = []
+        for d in week:
+            in_month = (d.month == month_start.month)
+            booked = False
+            if in_month:
+                for r in ranges:
+                    if r["start_date"] <= d <= r["end_date"]:
+                        booked = True
+                        break
+            row.append(
+                {
+                    "date": d,
+                    "in_month": in_month,
+                    "booked": booked,
+                    "today": d == today,
+                }
+            )
+        weeks.append(row)
+
+    car.current_booking = current
+    car.next_booking = next_b
+    car.calendar_weeks = weeks
+    car.upcoming_bookings = upcoming
+
+
 # ---------------------------
 # Dealer pages
 # ---------------------------
@@ -136,78 +222,58 @@ def dealer_required(view_fn):
 @dealer_required
 def dealer_dashboard(request):
     dealer = request.user.dealer_profile
-    cars = list(dealer.cars.order_by("-id"))
+    today = timezone.localdate()
+    month_start, month_end = _month_bounds(today)
+    cars = list(
+        dealer.cars
+        .annotate(
+            confirmed_bookings=Count(
+                "bookings",
+                filter=Q(bookings__status=Booking.Status.CONFIRMED),
+            ),
+            confirmed_revenue=Sum(
+                "bookings__total_price",
+                filter=Q(bookings__status=Booking.Status.CONFIRMED),
+            ),
+        )
+        .order_by("-id")
+    )
 
     # Metrics for current month
-    today = timezone.localdate()
-    month_start = today.replace(day=1)
-    # Naive month end calculation
-    if month_start.month == 12:
-        month_end = month_start.replace(year=month_start.year+1, month=1, day=1)
-    else:
-        month_end = month_start.replace(month=month_start.month+1, day=1)
 
     month_bookings = (
         Booking.objects
-        .filter(car__dealer=dealer,
-                start_date__gte=month_start,
-                start_date__lt=month_end,
-                status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED])
+        .filter(
+            car__dealer=dealer,
+            start_date__gte=month_start,
+            start_date__lt=month_end,
+            status__in=ACTIVE_BOOKING_STATUSES,
+        )
+    )
+    pending_bookings = (
+        Booking.objects
+        .filter(
+            car__dealer=dealer,
+            status=Booking.Status.PENDING,
+        )
+        .select_related("car", "user")
+        .order_by("start_date", "created_at")
     )
     metrics = month_bookings.aggregate(
         bookings_count=Count("id"),
-        revenue=Sum("total_price")
+        revenue=Sum("total_price", filter=Q(status=Booking.Status.CONFIRMED)),
+        pending=Count("id", filter=Q(status=Booking.Status.PENDING)),
     )
 
     # Availability info per car (current status and next booking window)
     for car in cars:
-        current = Booking.objects.filter(
-            car=car,
-            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
-            start_date__lte=today,
-            end_date__gte=today,
-        ).order_by("start_date").first()
-        next_b = (
-            Booking.objects
-            .filter(car=car,
-                    status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
-                    start_date__gt=today)
-            .order_by("start_date")
-            .first()
+        _attach_car_schedule(
+            car,
+            month_start=month_start,
+            month_end=month_end,
+            today=today,
+            upcoming_limit=4,
         )
-        # attach for easy template access without custom tags
-        car.current_booking = current
-        car.next_booking = next_b
-
-        # Build a mini calendar (current month) with booked days highlighted
-        month_weeks = calendar.Calendar(firstweekday=0).monthdatescalendar(month_start.year, month_start.month)
-        # Ranges overlapping the month
-        ranges = list(Booking.objects.filter(
-            car=car,
-            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
-            end_date__gte=month_start,
-            start_date__lt=month_end,
-        ).values("start_date", "end_date"))
-
-        weeks = []
-        for week in month_weeks:
-            row = []
-            for d in week:
-                in_month = (d.month == month_start.month)
-                booked = False
-                if in_month:
-                    for r in ranges:
-                        if r["start_date"] <= d <= r["end_date"]:
-                            booked = True
-                            break
-                row.append({
-                    "date": d,
-                    "in_month": in_month,
-                    "booked": booked,
-                    "today": d == today,
-                })
-            weeks.append(row)
-        car.calendar_weeks = weeks
 
     context = {
         "dealer": dealer,
@@ -216,6 +282,7 @@ def dealer_dashboard(request):
         "month_start": month_start,
         "today": today,
         "month_bookings": month_bookings.select_related("car", "user").order_by("start_date"),
+        "pending_bookings": pending_bookings,
     }
     return render(request, "dealer/dashboard.html", context)
 
@@ -305,6 +372,72 @@ def dealer_apply(request):
     else:
         form = DealerApplyForm()
     return render(request, "dealer/apply.html", {"form": form})
+
+
+@login_required
+@dealer_required
+def dealer_car_bookings(request, pk):
+    dealer = request.user.dealer_profile
+    car = get_object_or_404(Car, pk=pk, dealer=dealer)
+    today = timezone.localdate()
+    month_start, month_end = _month_bounds(today)
+    _attach_car_schedule(
+        car,
+        month_start=month_start,
+        month_end=month_end,
+        today=today,
+        upcoming_limit=None,
+    )
+    bookings = list(
+        car.bookings.select_related("user").order_by("-start_date", "-created_at")
+    )
+    if request.method == "POST":
+        booking_id = request.POST.get("booking_id")
+        action = (request.POST.get("action") or "").lower()
+        booking = get_object_or_404(car.bookings, pk=booking_id)
+        if action == "confirm" and booking.status != Booking.Status.CONFIRMED:
+            booking.status = Booking.Status.CONFIRMED
+            booking.save(update_fields=["status"])
+            messages.success(request, "Booking confirmed.")
+        elif action in {"cancel", "reject"} and booking.status != Booking.Status.CANCELLED:
+            booking.status = Booking.Status.CANCELLED
+            booking.save(update_fields=["status"])
+            messages.info(request, "Booking cancelled.")
+        else:
+            messages.warning(request, "No changes applied.")
+        return redirect("dealer_car_bookings", pk=car.pk)
+
+    return render(
+        request,
+        "dealer/car_bookings.html",
+        {
+            "car": car,
+            "bookings": bookings,
+            "calendar_month_start": month_start,
+            "today": today,
+        },
+    )
+
+
+@login_required
+@dealer_required
+def dealer_update_booking_status(request, pk):
+    dealer = request.user.dealer_profile
+    booking = get_object_or_404(Booking, pk=pk, car__dealer=dealer)
+    if request.method != "POST":
+        return redirect("dealer_dashboard")
+    action = (request.POST.get("action") or "").strip().lower()
+    if action == "confirm" and booking.status != Booking.Status.CONFIRMED:
+        booking.status = Booking.Status.CONFIRMED
+        booking.save(update_fields=["status"])
+        messages.success(request, f"Booking for {booking.car.title} confirmed.")
+    elif action in {"cancel", "reject"} and booking.status != Booking.Status.CANCELLED:
+        booking.status = Booking.Status.CANCELLED
+        booking.save(update_fields=["status"])
+        messages.info(request, f"Booking for {booking.car.title} cancelled.")
+    else:
+        messages.warning(request, "Nothing to update for this booking.")
+    return redirect("dealer_dashboard")
 
 
 # ---------------------------

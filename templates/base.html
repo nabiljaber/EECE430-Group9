@@ -30,7 +30,7 @@
             <a href="{{ dealer_url }}" class="{% if dealer_url in request.path %}active-link{% endif %}">Dealer Dashboard</a>
           {% else %}
             {% url 'account_dashboard' as account_url %}
-            <a href="{{ account_url }}" class="{% if account_url in request.path %}active-link{% endif %}">My Dashboard</a>
+            <a href="{{ account_url }}" class="{% if account_url in request.path %}active-link{% endif %}">My Bookings</a>
             <a href="{% url 'dealer_apply' %}">Become a dealer</a>
           {% endif %}
         {% else %}
@@ -65,7 +65,7 @@
                 </div>
               </div>
               <div class="menu-items">
-                <a role="menuitem" href="{% url 'account_dashboard' %}">My account</a>
+                <a role="menuitem" href="{% url 'account_dashboard' %}">My Bookings</a>
                 <a role="menuitem" href="{% url 'password_change' %}">Change password</a>
                 <div class="menu-sep"></div>
                 <a role="menuitem" href="{% url 'logout' %}">Sign out</a>

@@ -18,4 +18,6 @@ urlpatterns = [
     path("dealer/cars/<int:pk>/price/", views.dealer_update_price, name="dealer_update_price"),
     path("dealer/cars/<int:pk>/edit/", views.dealer_edit_car, name="dealer_edit_car"),
     path("dealer/cars/<int:pk>/delete/", views.dealer_delete_car, name="dealer_delete_car"),
+    path("dealer/cars/<int:pk>/bookings/", views.dealer_car_bookings, name="dealer_car_bookings"),
+    path("dealer/bookings/<int:pk>/status/", views.dealer_update_booking_status, name="dealer_update_booking_status"),
 ]

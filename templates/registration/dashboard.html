@@ -1,52 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>My Account</h1>
 
-<div class="grid">
-  <div class="card">
-    <h3>Profile</h3>
-    <p class="meta">
-      {{ request.user.first_name }} {{ request.user.last_name }}<br>
-      {{ request.user.email }}<br>
-      Username: {{ request.user.username }}
-    </p>
-    <div class="space-y mt-3">
-      <a class="btn btn-outline" href="{% url 'password_change' %}">Change password</a>
-      <a class="btn" href="{% url 'logout' %}">Logout</a>
-    </div>
-  </div>
+<h1>My Bookings</h1>
 
-  <div class="card" style="grid-column: 1 / -1;">
-    <h3>My Bookings</h3>
-    {% if bookings %}
-      <div class="table" style="margin-top:10px;">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Car</th>
-              <th>Dates</th>
-              <th>Status</th>
-              <th>Booked</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for b in bookings %}
-              <tr>
-                <td><a href="{% url 'car_detail' b.car.pk %}">{{ b.car.title }}</a></td>
-                <td>{{ b.start_date }} → {{ b.end_date }}</td>
-                <td>{{ b.status|title }}</td>
-                <td>{{ b.created_at|date:"Y-m-d H:i" }}</td>
-                <td><a class="btn btn-outline" href="{% url 'car_detail' b.car.pk %}">View</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="muted">You don’t have any bookings yet.</p>
-      <a class="btn btn-primary mt-3" href="{% url 'car_list' %}">Browse cars</a>
-    {% endif %}
-  </div>
+<div class="card" style="overflow-x:auto;">
+  {% if bookings %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Car</th>
+          <th>Dealer</th>
+          <th>Dates</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+          <tr>
+            <td><a href="{% url 'car_detail' booking.car.pk %}">{{ booking.car.title }}</a></td>
+            <td>{{ booking.car.dealer.name }}</td>
+            <td>{{ booking.start_date }} - {{ booking.end_date }}</td>
+            <td>{{ booking.status|title }}</td>
+            <td>${{ booking.total_price|default:0 }}</td>
+            <td>
+              <a class="btn btn-outline btn-sm" href="{% url 'car_detail' booking.car.pk %}">View</a>
+              {% if booking.car.dealer.email %}
+                <a class="btn btn-secondary btn-sm" href="mailto:{{ booking.car.dealer.email }}?subject=Booking for {{ booking.car.title }}">Contact dealer</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">You don't have any bookings yet.</p>
+    <a class="btn btn-primary mt-3" href="{% url 'car_list' %}">Browse cars</a>
+  {% endif %}
 </div>
+
 {% endblock %}

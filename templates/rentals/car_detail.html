@@ -13,8 +13,8 @@
       <h1 class="mb-2">{{ car.title }}</h1>
       <div class="meta">
         {{ car.get_car_type_display }}
-        {% if car.year %} · {{ car.year }}{% endif %}
-        {% if car.transmission %} · {{ car.get_transmission_display }}{% endif %}
+        {% if car.year %} | {{ car.year }}{% endif %}
+        {% if car.transmission %} | {{ car.get_transmission_display }}{% endif %}
       </div>
 
       {% if car.description %}
@@ -30,6 +30,41 @@
         {% if car.doors %}<div>Doors</div><div>{{ car.doors }}</div>{% endif %}
         {% if car.mileage_km %}<div>Mileage</div><div>{{ car.mileage_km }} km</div>{% endif %}
       </div>
+    </div>
+
+    <div class="card mt-3">
+      <h2 class="mb-2">Availability</h2>
+      {% if car.current_booking %}
+        <div class="chip" style="color:#ffb4c0;border-color:#55181f;background:#2a0f13">Reserved until {{ car.current_booking.end_date }}</div>
+      {% elif car.next_booking %}
+        <div class="chip">Next reservation: {{ car.next_booking.start_date }} - {{ car.next_booking.end_date }}</div>
+      {% else %}
+        <div class="chip" style="color:#b4ffd2;border-color:#1f5531;background:#0f2a1a">Available now</div>
+      {% endif %}
+
+      <div class="muted" style="margin-top:12px;">{{ calendar_month_start|date:"F Y" }}</div>
+      <div class="mini-cal mt-2">
+        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+        {% for week in car.calendar_weeks %}
+          {% for d in week %}
+            <div class="day{% if not d.in_month %} dim{% endif %}{% if d.booked %} booked{% endif %}{% if d.today %} today{% endif %}">
+              {{ d.date.day }}
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      <div class="muted" style="margin-top:8px;font-size:12px;">Green = Available | Red = Booked</div>
+
+      {% if upcoming_bookings %}
+        <div class="mt-3">
+          <h4>Upcoming reservations</h4>
+          <ul class="muted" style="margin:0;padding-left:18px;">
+            {% for booking in upcoming_bookings %}
+              <li>{{ booking.start_date }} &ndash; {{ booking.end_date }} ({{ booking.get_status_display }})</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
     </div>
   </div>
 
