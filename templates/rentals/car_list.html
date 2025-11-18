@@ -89,7 +89,11 @@
     {% for car in cars %}
       <article class="car-card card">
         <a class="thumb" href="{% url 'car_detail' car.pk %}">
-          <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ car.title }}">
+          {% if car.primary_image %}
+            <img src="{{ car.primary_image }}" alt="{{ car.title }}">
+          {% else %}
+            <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ car.title }}">
+          {% endif %}
         </a>
         <div class="body">
           <h3 class="title"><a href="{% url 'car_detail' car.pk %}">{{ car.title }}</a></h3>

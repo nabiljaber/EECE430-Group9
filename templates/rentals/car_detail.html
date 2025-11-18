@@ -52,15 +52,23 @@
         <div class="chip" style="color:#b4ffd2;border-color:#1f5531;background:#0f2a1a">Available now</div>
       {% endif %}
 
-      <div class="muted" style="margin-top:12px;">{{ calendar_month_start|date:"F Y" }}</div>
-      <div class="mini-cal mt-2">
-        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
-        {% for week in car.calendar_weeks %}
-          {% for d in week %}
-            <div class="day{% if not d.in_month %} dim{% endif %}{% if d.booked %} booked{% endif %}{% if d.today %} today{% endif %}">
-              {{ d.date.day }}
-            </div>
-          {% endfor %}
+      <div class="mini-cal-nav" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <button type="button" class="btn btn-outline btn-sm" id="calPrev">←</button>
+        <div id="calLabel" class="muted" style="flex:1;text-align:center;font-weight:600;"></div>
+        <button type="button" class="btn btn-outline btn-sm" id="calNext">→</button>
+      </div>
+      <div class="mini-cal mt-2" id="calContainer">
+        {% for month in car.calendar_months %}
+          <div class="cal-month" data-label="{{ month.label }}">
+            <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+            {% for week in month.weeks %}
+              {% for d in week %}
+                <div class="day{% if not d.in_month %} dim{% endif %}{% if d.booked %} booked{% endif %}{% if d.today %} today{% endif %}">
+                  {{ d.date.day }}
+                </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
         {% endfor %}
       </div>
       <div class="muted" style="margin-top:8px;font-size:12px;">Green = Available | Red = Booked</div>
@@ -110,4 +118,53 @@
   </aside>
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  #calContainer { display: block; }
+  #calContainer .cal-month {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(40px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  #calContainer .cal-month .dow {
+    font-size: 12px;
+    text-align: center;
+    opacity: 0.75;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+  }
+  #calContainer .cal-month .day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 34px;
+    border-radius: 6px;
+  }
+</style>
+<script>
+(function(){
+  const container = document.getElementById('calContainer');
+  const months = container ? Array.from(container.querySelectorAll('.cal-month')) : [];
+  if (!months.length) return;
+  let idx = 0;
+  const label = document.getElementById('calLabel');
+  const prev = document.getElementById('calPrev');
+  const next = document.getElementById('calNext');
+
+  function render() {
+    months.forEach((m,i)=>{ m.style.display = i===idx ? 'grid' : 'none'; });
+    if (label) label.textContent = months[idx].dataset.label || '';
+    if (prev) prev.disabled = idx === 0;
+    if (next) next.disabled = idx === months.length - 1;
+  }
+  if (prev) prev.addEventListener('click', ()=>{ if(idx>0){ idx--; render(); }});
+  if (next) next.addEventListener('click', ()=>{ if(idx<months.length-1){ idx++; render(); }});
+  render();
+})();
+</script>
 {% endblock %}

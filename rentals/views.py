@@ -8,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Car, Dealer, Booking, Favorite
+from .models import Car, Dealer, Booking, Favorite, CarImage
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
 from urllib.parse import urlencode
@@ -110,11 +110,12 @@ def car_detail(request, pk):
     car = get_object_or_404(Car, pk=pk)
     form = BookingForm()
     today = timezone.localdate()
-    month_start, month_end = _month_bounds(today)
+    month_start, _ = _month_bounds(today)
+    # Build current month + next 12 months (total 12)
     _attach_car_schedule(
         car,
         month_start=month_start,
-        month_end=month_end,
+        months=12,
         today=today,
         upcoming_limit=5,
     )
@@ -169,7 +170,7 @@ def _month_bounds(anchor=None):
     return month_start, month_end
 
 
-def _attach_car_schedule(car, *, month_start, month_end, today, upcoming_limit=3):
+def _attach_car_schedule(car, *, month_start, today, months=1, upcoming_limit=3):
     """Attach availability info (current/next booking and calendar weeks) to a car."""
     base_qs = (
         Booking.objects
@@ -185,6 +186,15 @@ def _attach_car_schedule(car, *, month_start, month_end, today, upcoming_limit=3
     if upcoming_limit is not None:
         upcoming_qs = upcoming_qs[:upcoming_limit]
     upcoming = list(upcoming_qs)
+    # Gather bookings during the span we render
+    month_ends = []
+    m_start = month_start
+    for i in range(months):
+        _, next_start = _month_bounds(m_start)
+        month_ends.append(next_start)
+        m_start = next_start
+    month_end = month_ends[-1]
+
     ranges = list(
         base_qs.filter(
             end_date__gte=month_start,
@@ -192,30 +202,45 @@ def _attach_car_schedule(car, *, month_start, month_end, today, upcoming_limit=3
         ).values("start_date", "end_date")
     )
 
-    weeks = []
-    for week in calendar.Calendar(firstweekday=0).monthdatescalendar(month_start.year, month_start.month):
-        row = []
-        for d in week:
-            in_month = (d.month == month_start.month)
-            booked = False
-            if in_month:
-                for r in ranges:
-                    if r["start_date"] <= d <= r["end_date"]:
-                        booked = True
-                        break
-            row.append(
-                {
-                    "date": d,
-                    "in_month": in_month,
-                    "booked": booked,
-                    "today": d == today,
-                }
-            )
-        weeks.append(row)
+    months_data = []
+    m_start = month_start
+    for i in range(months):
+        cal = calendar.Calendar(firstweekday=0).monthdatescalendar(m_start.year, m_start.month)
+        weeks = []
+        for week in cal:
+            row = []
+            for d in week:
+                in_month = (d.month == m_start.month)
+                booked = False
+                if in_month:
+                    for r in ranges:
+                        if r["start_date"] <= d <= r["end_date"]:
+                            booked = True
+                            break
+                row.append(
+                    {
+                        "date": d,
+                        "in_month": in_month,
+                        "booked": booked,
+                        "today": d == today,
+                    }
+                )
+            weeks.append(row)
+        months_data.append(
+            {
+                "label": m_start.strftime("%B %Y"),
+                "weeks": weeks,
+            }
+        )
+        # next month start
+        if m_start.month == 12:
+            m_start = m_start.replace(year=m_start.year + 1, month=1, day=1)
+        else:
+            m_start = m_start.replace(month=m_start.month + 1, day=1)
 
     car.current_booking = current
     car.next_booking = next_b
-    car.calendar_weeks = weeks
+    car.calendar_months = months_data
     car.upcoming_bookings = upcoming
 
 
@@ -275,7 +300,7 @@ def dealer_dashboard(request):
         _attach_car_schedule(
             car,
             month_start=month_start,
-            month_end=month_end,
+            months=3,
             today=today,
             upcoming_limit=4,
         )
@@ -297,11 +322,15 @@ def dealer_dashboard(request):
 def dealer_add_car(request):
     dealer = request.user.dealer_profile
     if request.method == "POST":
-        form = DealerCarForm(request.POST)
+        form = DealerCarForm(request.POST, request.FILES)
         if form.is_valid():
             car = form.save(commit=False)
             car.dealer = dealer
             car.save()
+            uploaded_image = form.cleaned_data.get("image")
+            if uploaded_image:
+                # Save primary image
+                CarImage.objects.create(car=car, image=uploaded_image, is_primary=True)
             messages.success(request, "Car added successfully.")
             return redirect("dealer_dashboard")
     else:
@@ -315,9 +344,14 @@ def dealer_edit_car(request, pk):
     dealer = request.user.dealer_profile
     car = get_object_or_404(Car, pk=pk, dealer=dealer)
     if request.method == "POST":
-        form = DealerCarForm(request.POST, instance=car)
+        form = DealerCarForm(request.POST, request.FILES, instance=car)
         if form.is_valid():
-            form.save()
+            car = form.save()
+            uploaded_image = form.cleaned_data.get("image")
+            if uploaded_image:
+                # If another primary exists, keep it; otherwise set this as primary
+                is_primary = not car.images.filter(is_primary=True).exists()
+                CarImage.objects.create(car=car, image=uploaded_image, is_primary=is_primary)
             messages.success(request, "Car updated.")
             return redirect("dealer_dashboard")
     else:

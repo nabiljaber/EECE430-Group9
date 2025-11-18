@@ -3,7 +3,7 @@
 <h1>{{ title }}</h1>
 
 <div class="card auth-card" style="max-width:820px;margin-top:14px">
-  <form method="post" class="auth-form">
+  <form method="post" enctype="multipart/form-data" class="auth-form">
     {% csrf_token %}
 
     <fieldset>
@@ -94,6 +94,13 @@
           <label>Country</label> {{ form.location_country }} {{ form.location_country.errors }}
         </div>
       </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Photos</legend>
+      <label>Main photo</label>
+      {{ form.image }} {{ form.image.errors }}
+      <p class="muted" style="font-size:12px;">This will be used as the primary image for the listing.</p>
     </fieldset>
 
     <div class="auth-actions">
