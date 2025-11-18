@@ -6,14 +6,22 @@
   <!-- Left: gallery + specs -->
   <div>
     <div class="card">
-      <img class="detail-hero" src="{% static 'img/car-placeholder.svg' %}" alt="{{ car.title }}">
+      {% if car.primary_image %}
+        <img class="detail-hero" src="{{ car.primary_image }}" alt="{{ car.title }}">
+      {% else %}
+        <img class="detail-hero" src="{% static 'img/car-placeholder.svg' %}" alt="{{ car.title }}">
+      {% endif %}
     </div>
 
     <div class="card mt-3">
       <h1 class="mb-2">{{ car.title }}</h1>
       <div class="meta">
-        {{ car.get_car_type_display }}
-        {% if car.year %} | {{ car.year }}{% endif %}
+        {% if car.make or car.model %}
+          {{ car.make }} {{ car.model }}{% if car.year %} | {{ car.year }}{% endif %}
+        {% else %}
+          {% if car.year %}{{ car.year }}{% endif %}
+        {% endif %}
+        {% if car.car_type %} | {{ car.get_car_type_display }}{% endif %}
         {% if car.transmission %} | {{ car.get_transmission_display }}{% endif %}
       </div>
 
@@ -23,6 +31,8 @@
 
       <div class="kv mt-3">
         <div>Dealer</div><div>{{ car.dealer.name }}</div>
+        {% if car.make %}<div>Make</div><div>{{ car.make }}</div>{% endif %}
+        {% if car.model %}<div>Model</div><div>{{ car.model }}</div>{% endif %}
         {% if car.location_city or car.location_country %}
           <div>Location</div><div>{{ car.location_city }} {{ car.location_country }}</div>
         {% endif %}
@@ -35,7 +45,7 @@
     <div class="card mt-3">
       <h2 class="mb-2">Availability</h2>
       {% if car.current_booking %}
-        <div class="chip" style="color:#ffb4c0;border-color:#55181f;background:#2a0f13">Reserved until {{ car.current_booking.end_date }}</div>
+        <div class="chip" style="color:#ffb4c0;border-color:#a22b3a;background:#2a0f13">Reserved until {{ car.current_booking.end_date }}</div>
       {% elif car.next_booking %}
         <div class="chip">Next reservation: {{ car.next_booking.start_date }} - {{ car.next_booking.end_date }}</div>
       {% else %}
@@ -54,30 +64,35 @@
         {% endfor %}
       </div>
       <div class="muted" style="margin-top:8px;font-size:12px;">Green = Available | Red = Booked</div>
-
-      {% if upcoming_bookings %}
-        <div class="mt-3">
-          <h4>Upcoming reservations</h4>
-          <ul class="muted" style="margin:0;padding-left:18px;">
-            {% for booking in upcoming_bookings %}
-              <li>{{ booking.start_date }} &ndash; {{ booking.end_date }} ({{ booking.get_status_display }})</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
     </div>
   </div>
 
-  <!-- Right: booking card -->
+  <!-- Right: booking form -->
   <aside>
     <div class="card">
-      <div class="price-lg"><strong>${{ car.price_per_day }}</strong> / day</div>
+      <h2>Book this car</h2>
+      <p class="muted">Choose your dates to send a reservation request to the dealer.</p>
 
       {% if user.is_authenticated %}
+        <form method="post" action="{% url 'toggle_favorite' car.pk %}" style="margin-bottom:12px;">
+          {% csrf_token %}
+          {% if is_favorite %}
+            <button class="btn btn-secondary btn-block" type="submit">Remove from wishlist</button>
+          {% else %}
+            <button class="btn btn-outline btn-block" type="submit">Save to wishlist</button>
+          {% endif %}
+        </form>
+
         <form method="post" action="{% url 'create_booking' car.pk %}" class="space-y auth-form">
           {% csrf_token %}
           <label>Start date</label>{{ form.start_date }}
           <label>End date</label>{{ form.end_date }}
+          <label class="checkbox">
+            {{ form.insurance_selected }} <span>{{ form.insurance_selected.label }}</span>
+            {% if form.insurance_selected.help_text %}
+              <div class="muted" style="font-size:12px;">{{ form.insurance_selected.help_text }}</div>
+            {% endif %}
+          </label>
           <button class="btn btn-primary btn-block mt-3">Book now</button>
         </form>
       {% else %}

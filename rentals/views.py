@@ -8,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Car, Dealer, Booking
+from .models import Car, Dealer, Booking, Favorite
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
 from urllib.parse import urlencode
@@ -16,6 +16,8 @@ import calendar
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from .forms import BookingForm, DealerCarForm, PriceForm, DealerApplyForm
+
+INSURANCE_DAILY_FEE = Decimal("20.00")
 
 ACTIVE_BOOKING_STATUSES = [Booking.Status.PENDING, Booking.Status.CONFIRMED]
 
@@ -122,6 +124,9 @@ def car_detail(request, pk):
         "calendar_month_start": month_start,
         "today": today,
         "upcoming_bookings": getattr(car, "upcoming_bookings", []),
+        "is_favorite": Favorite.objects.filter(user=request.user, car=car).exists()
+        if request.user.is_authenticated
+        else False,
     }
     return render(request, "rentals/car_detail.html", context)
 
@@ -441,18 +446,52 @@ def dealer_update_booking_status(request, pk):
 
 
 # ---------------------------
+# Favorites / wishlist
+# ---------------------------
+
+@login_required
+def toggle_favorite(request, pk):
+    car = get_object_or_404(Car, pk=pk)
+    fav, created = Favorite.objects.get_or_create(user=request.user, car=car)
+    if not created:
+        fav.delete()
+        messages.info(request, f"Removed {car.title} from your wishlist.")
+    else:
+        messages.success(request, f"Saved {car.title} to your wishlist.")
+    return redirect("car_detail", pk=car.pk)
+
+
+@login_required
+def favorites_list(request):
+    favorites = (
+        Favorite.objects.filter(user=request.user)
+        .select_related("car", "car__dealer")
+        .order_by("-created_at")
+    )
+    return render(request, "rentals/favorites_list.html", {"favorites": favorites})
+
+
+# ---------------------------
 # Booking
 # ---------------------------
 
 @login_required
 def create_booking(request, pk):
     car = get_object_or_404(Car, pk=pk)
+
+    # Block dealers from booking
+    dealer_profile = getattr(request.user, "dealer_profile", None)
+    if dealer_profile and dealer_profile.active:
+        messages.error(request, "Dealer accounts cannot book cars. Please use a customer account to book.")
+        return redirect("car_detail", pk=car.pk)
+
     form = BookingForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
         booking = form.save(commit=False)
         booking.user = request.user
         booking.car = car
+        insurance_selected = form.cleaned_data.get("insurance") or False
 
         # Basic date checks
         start = booking.start_date
@@ -476,11 +515,16 @@ def create_booking(request, pk):
             else:
                 # Compute total price (at least 1 day)
                 days = (end - start).days or 1
-                booking.total_price = days * car.price_per_day
+                base_price = days * car.price_per_day
+                insurance_fee = days * INSURANCE_DAILY_FEE if insurance_selected else Decimal("0.00")
+                booking.total_price = base_price + insurance_fee
+                booking.insurance_selected = insurance_selected
+                booking.insurance_fee = insurance_fee if insurance_selected else None
                 booking.currency = getattr(car, "currency", "USD")
                 booking.save()
-                messages.success(request, "Booking created. We’ll confirm shortly.")
+                messages.success(request, "Booking created. We'll confirm shortly.")
                 return redirect("car_detail", pk=car.pk)
 
     # Re-render detail page with errors or empty form
     return render(request, "rentals/car_detail.html", {"car": car, "form": form})
+

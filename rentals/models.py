@@ -1,4 +1,3 @@
-# rentals/models.py
 from django.db import models
 from django.conf import settings
 
@@ -7,10 +6,11 @@ from django.conf import settings
 # Dealer
 # -----------------------------
 class Dealer(models.Model):
-    # One account per dealer (lets us use user.dealer_profile in guards/menus)
+    # One account per dealer
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="dealer_profile",
     )
@@ -51,11 +51,11 @@ class Car(models.Model):
     description = models.TextField(blank=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    color= models.CharField(max_length=30, blank=True)
+    color = models.CharField(max_length=30, blank=True)
 
-    # Optional extras used by UI/filters
-    make = models.CharField(max_length=100, blank=True)   # e.g., Toyota
-    model = models.CharField(max_length=100, blank=True)  # e.g., Corolla
+    # Car attributes
+    make = models.CharField(max_length=100, blank=True)
+    model = models.CharField(max_length=100, blank=True)
     year = models.PositiveSmallIntegerField(null=True, blank=True)
     transmission = models.CharField(max_length=10, choices=TRANSMISSION, default="AUTO")
     seats = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -76,13 +76,27 @@ class Car(models.Model):
     def __str__(self):
         return f"{self.title} ({self.dealer.name})"
 
+    # -----------------------------
+    # Main image helper (for display)
+    # -----------------------------
+    @property
+    def primary_image(self):
+        """
+        Returns the primary CarImage if exists, otherwise the first.
+        """
+        primary = self.images.filter(is_primary=True).first()
+        if primary:
+            return primary.image.url if primary.image else None
+
+        first = self.images.first()
+        return first.image.url if first and first.image else None
+
 
 # -----------------------------
 # Car images (gallery)
 # -----------------------------
 class CarImage(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="images")
-    # Requires Pillow if you keep ImageField; otherwise switch to CharField path.
     image = models.ImageField(upload_to="cars/", blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -111,6 +125,8 @@ class Booking(models.Model):
 
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    insurance_selected = models.BooleanField(default=False)
+    insurance_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, default="USD")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -128,4 +144,17 @@ class Booking(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.car.title} | {self.user} ({self.status})"
+        return f"{self.car.title} booking by {self.user.username}"
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="favorites")
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="favorited_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "car")
+        indexes = [models.Index(fields=["user", "car"])]
+
+    def __str__(self):
+        return f"{self.user.username} → {self.car.title}"

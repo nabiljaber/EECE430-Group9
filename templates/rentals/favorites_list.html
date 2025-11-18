@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>My Wishlist</h1>
+
+<div class="card" style="overflow-x:auto;">
+  {% if favorites %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Car</th>
+          <th>Dealer</th>
+          <th>Location</th>
+          <th>Added</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fav in favorites %}
+          <tr>
+            <td><a href="{% url 'car_detail' fav.car.pk %}">{{ fav.car.title }}</a></td>
+            <td>{{ fav.car.dealer.name }}</td>
+            <td>{{ fav.car.location_city }} {{ fav.car.location_country }}</td>
+            <td>{{ fav.created_at|date:"M j, Y" }}</td>
+            <td>
+              <form method="post" action="{% url 'toggle_favorite' fav.car.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-outline btn-sm" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">You haven't saved any cars yet.</p>
+    <a class="btn btn-primary mt-3" href="{% url 'car_list' %}">Browse cars</a>
+  {% endif %}
+</div>
+{% endblock %}

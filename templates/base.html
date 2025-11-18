@@ -8,6 +8,88 @@
   <meta name="description" content="{{ SITE_TAGLINE }}">
   <link rel="icon" href="{% static 'favicon.ico' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+    /* GitHub-style avatar wrapper */
+    .user-menu-wrap {
+      margin-left: auto;
+      position: relative;
+    }
+
+    /* Circle avatar */
+    .avatar-btn {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* Dropdown menu */
+    .user-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      min-width: 220px;
+      background: #05070f;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.6);
+      padding: 6px 0 4px 0;
+      display: none;
+      z-index: 999;
+    }
+
+    .user-menu.open {
+      display: block;
+    }
+
+    .user-menu-header {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-email {
+      opacity: 0.7;
+      font-size: 12px;
+    }
+
+    .user-menu-body a,
+    .user-menu-footer a {
+      display: block;
+      padding: 7px 14px;
+      font-size: 13px;
+    }
+
+    .user-menu-body a:hover,
+    .user-menu-footer a:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .user-menu-footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 4px;
+      padding-top: 4px;
+    }
+  </style>
+
 </head>
 <body class="site">
   <header class="site-header">
@@ -17,85 +99,107 @@
         <span class="brand-name">{{ SITE_NAME }}</span>
       </a>
 
-      {% url 'home' as home_url %}
-      {% url 'car_list' as browse_url %}
-      <nav class="main-nav" aria-label="Main">
-        <a href="{{ home_url }}" class="{% if request.path == home_url %}active-link{% endif %}">Home</a>
-        <a href="{{ browse_url }}" class="{% if request.path|slice:':9' == '/rentals/' %}active-link{% endif %}">Browse Cars</a>
+          {% url 'home' as home_url %}
+          {% url 'car_list' as browse_url %}
+          {% url 'dealer_apply' as apply_url %}
 
-        {# Role-aware dashboard link #}
-        {% if user.is_authenticated %}
-          {% if user.dealer_profile and user.dealer_profile.active %}
-            {% url 'dealer_dashboard' as dealer_url %}
-            <a href="{{ dealer_url }}" class="{% if dealer_url in request.path %}active-link{% endif %}">Dealer Dashboard</a>
-          {% else %}
-            {% url 'account_dashboard' as account_url %}
-            <a href="{{ account_url }}" class="{% if account_url in request.path %}active-link{% endif %}">My Bookings</a>
-            <a href="{% url 'dealer_apply' %}">Become a dealer</a>
-          {% endif %}
-        {% else %}
-          <a href="{% url 'dealer_apply' %}">Become a dealer</a>
-        {% endif %}
+          <nav class="main-nav" aria-label="Main">
 
-        {% if user.is_authenticated %}
-          {# Optional: staff-only quick Add Car (dealers add via dashboard) #}
-          {% if user.is_staff or user.is_superuser %}
-            <a href="{% url 'add_car' %}" class="btn btn-outline">Add Car</a>
-          {% endif %}
+            <a href="{{ home_url }}"
+              class="{% if request.resolver_match.url_name == 'home' %}active-link{% endif %}">
+              Home
+            </a>
 
-          <div class="user-menu">
-            <button class="avatar-btn" id="avatarBtn" aria-haspopup="menu" aria-expanded="false">
-              <span class="avatar">
-                {% with name=user.first_name|default:user.username %}
-                  {{ name|slice:":1"|upper }}
-                {% endwith %}
-              </span>
-            </button>
+            <a href="{{ browse_url }}"
+              class="{% if request.resolver_match.url_name == 'car_list' or request.resolver_match.url_name == 'car_detail' %}active-link{% endif %}">
+              Browse Cars
+            </a>
 
-            <div class="menu" id="userMenu" role="menu" aria-labelledby="avatarBtn">
-              <div class="menu-header">
-                <div class="avatar sm">
-                  {% with name=user.first_name|default:user.username %}
-                    {{ name|slice:":1"|upper }}
-                  {% endwith %}
-                </div>
-                <div>
-                  <div class="menu-username">{{ user.username }}</div>
-                  {% if user.email %}<div class="menu-email">{{ user.email }}</div>{% endif %}
-                </div>
+            {% if user.is_authenticated %}
+                {% if user.dealer_profile and user.dealer_profile.active %}
+                    {% url 'dealer_dashboard' as dealer_url %}
+                    <a href="{{ dealer_url }}"
+                      class="{% if request.resolver_match.url_name == 'dealer_dashboard' %}active-link{% endif %}">
+                      Dealer Dashboard
+                    </a>
+                {% else %}
+                    <a href="{{ apply_url }}"
+                      class="{% if request.resolver_match.url_name == 'dealer_apply' %}active-link{% endif %}">
+                      Become a dealer
+                    </a>
+
+                    <a href="{% url 'account_dashboard' %}"
+                      class="{% if request.resolver_match.url_name == 'account_dashboard' %}active-link{% endif %}">
+                      My Bookings
+                    </a>
+                    <a href="{% url 'favorites_list' %}"
+                      class="{% if request.resolver_match.url_name == 'favorites_list' %}active-link{% endif %}">
+                      Wishlist
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ apply_url }}"
+                  class="{% if request.resolver_match.url_name == 'dealer_apply' %}active-link{% endif %}">
+                  Become a dealer
+                </a>
+                <a href="{% url 'login' %}" class="btn">Login</a>
+                <a href="{% url 'signup' %}" class="btn btn-primary">Create account</a>
+            {% endif %}
+
+          </nav>
+
+      {% if user.is_authenticated %}
+        <div class="user-menu-wrap">
+          <button id="avatarBtn" class="avatar-btn" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-circle">
+              {{ user.first_name|default:user.username|first|upper }}
+            </span>
+          </button>
+          <div id="userMenu" class="user-menu" role="menu">
+            <div class="user-menu-header">
+              <div class="user-name">
+                {{ user.get_full_name|default:user.username }}
               </div>
-              <div class="menu-items">
-                <a role="menuitem" href="{% url 'account_dashboard' %}">My Bookings</a>
-                <a role="menuitem" href="{% url 'password_change' %}">Change password</a>
-                <div class="menu-sep"></div>
-                <a role="menuitem" href="{% url 'logout' %}">Sign out</a>
-              </div>
+              {% if user.email %}
+                <div class="user-email">{{ user.email }}</div>
+              {% endif %}
+            </div>
+            <div class="user-menu-body">
+              {% if user.dealer_profile and user.dealer_profile.active %}
+                <a href="{% url 'dealer_dashboard' %}" role="menuitem">Dealer dashboard</a>
+              {% else %}
+                <a href="{% url 'account_dashboard' %}" role="menuitem">My bookings</a>
+                <a href="{% url 'favorites_list' %}" role="menuitem">Wishlist</a>
+              {% endif %}
+              <a href="{% url 'account_overview' %}" role="menuitem">Account overview</a>
+            </div>
+            <div class="user-menu-footer">
+              <a href="{% url 'logout' %}" role="menuitem">Sign out</a>
             </div>
           </div>
-        {% else %}
-          <a href="{% url 'login' %}" class="btn">Login</a>
-          <a href="{% url 'signup' %}" class="btn btn-primary">Create account</a>
-        {% endif %}
-      </nav>
+        </div>
+      {% endif %}
+
     </div>
   </header>
 
-  {# ==== GLOBAL MESSAGES (green success window etc.) ==== #}
-  {% if messages %}
-    <div class="container messages" role="status" aria-live="polite">
-      {% for message in messages %}
-        <div class="alert {{ message.tags }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-  {% endif %}
+  <main class="site-main">
+    <div class="container">
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="alert {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-  <main class="site-main container">
-    {% block content %}{% endblock %}
+      {% block content %}{% endblock %}
+    </div>
   </main>
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <div class="muted">© {{ SITE_NAME }} {% now "Y" %}. All rights reserved.</div>
+      <p>&copy; {{ SITE_NAME }} {{ now|date:"Y" }} · {{ SITE_TAGLINE }}</p>
     </div>
   </footer>
 
@@ -115,11 +219,7 @@
         if(menu.classList.contains('open') && !menu.contains(e.target) && e.target!==btn) close();
       });
       document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
-    })();
-  </script>
-  <script>
-    // Auto-fade Django messages after 5 seconds
-    (function(){
+
       const alerts = document.querySelectorAll('.messages .alert');
       alerts.forEach((el)=>{
         const timeoutMs = 5000; // 5 seconds visible

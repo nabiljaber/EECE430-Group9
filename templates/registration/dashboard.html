@@ -12,6 +12,7 @@
           <th>Dealer</th>
           <th>Dates</th>
           <th>Status</th>
+          <th>Insurance</th>
           <th>Total</th>
           <th></th>
         </tr>
@@ -23,7 +24,14 @@
             <td>{{ booking.car.dealer.name }}</td>
             <td>{{ booking.start_date }} - {{ booking.end_date }}</td>
             <td>{{ booking.status|title }}</td>
-            <td>${{ booking.total_price|default:0 }}</td>
+            <td>
+              {% if booking.insurance_selected %}
+                Yes{% if booking.insurance_fee %} ({{ booking.currency }} {{ booking.insurance_fee }}){% endif %}
+              {% else %}
+                No
+              {% endif %}
+            </td>
+            <td>{{ booking.currency }} {{ booking.total_price|default:0 }}</td>
             <td>
               <a class="btn btn-outline btn-sm" href="{% url 'car_detail' booking.car.pk %}">View</a>
               {% if booking.car.dealer.email %}

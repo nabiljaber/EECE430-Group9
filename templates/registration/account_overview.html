@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %} | Account overview{% endblock %}
+
+{% block content %}
+<h1>Account overview</h1>
+
+<div class="card" style="max-width:640px;">
+  <form method="post">
+    {% csrf_token %}
+
+    {% if user_form.non_field_errors %}
+      {{ user_form.non_field_errors }}
+    {% endif %}
+    {% if dealer_form and dealer_form.non_field_errors %}
+      {{ dealer_form.non_field_errors }}
+    {% endif %}
+
+    <fieldset>
+      <legend>Account</legend>
+      <div class="form-grid">
+        {% for field in user_form %}
+          <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <p class="muted" style="font-size:12px;">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+              <p class="error">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    {% if dealer_form %}
+      <fieldset style="margin-top:16px;">
+        <legend>Dealership</legend>
+        <div class="form-grid">
+          {% for field in dealer_form %}
+            <div class="form-field">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <p class="muted" style="font-size:12px;">{{ field.help_text }}</p>
+              {% endif %}
+              {% for error in field.errors %}
+                <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
+
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+      <a href="{% url 'home' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save changes</button>
+    </div>
+  </form>
+
+  <div class="muted" style="margin-top:12px;font-size:12px;">
+    Your username (<strong>{{ request.user.username }}</strong>) cannot be changed.
+  </div>
+</div>
+{% endblock %}

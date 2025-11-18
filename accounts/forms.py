@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from rentals.models import Dealer
 
 User = get_user_model()
 
@@ -48,3 +49,19 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class AccountUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "email")
+
+
+class DealerUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Dealer
+        fields = ("name", "email", "phone")
+        labels = {
+            "name": "Dealership name",
+            "email": "Dealership email",
+            "phone": "Dealership phone",
+        }

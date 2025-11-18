@@ -14,16 +14,39 @@
           {{ form.title }} {{ form.title.errors }}
         </div>
         <div>
-          <label for="{{ form.available.id_for_label }}">Visibility</label>
-          {{ form.available }}
-          <div class="helptext">If checked, the car appears in search.</div>
-          {{ form.available.errors }}
+          <label for="{{ form.car_type.id_for_label }}">Type</label>
+          {{ form.car_type }} {{ form.car_type.errors }}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label for="{{ form.price_per_day.id_for_label }}">Price per day</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            {{ form.currency }} {{ form.currency.errors }}
+            {{ form.price_per_day }} {{ form.price_per_day.errors }}
+          </div>
+          <p class="muted" style="margin-top:4px;">What the customer pays per calendar day.</p>
+        </div>
+        <div>
+          <label for="{{ form.available.id_for_label }}">Available</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            {{ form.available }} {{ form.available.errors }}
+            <span class="muted">Uncheck to temporarily hide from search.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div style="flex:1 1 100%;">
+          <label for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }} {{ form.description.errors }}
         </div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Specifications</legend>
+      <legend>Vehicle details</legend>
       <div class="form-row">
         <div>
           <label>Make</label> {{ form.make }} {{ form.make.errors }}
@@ -32,22 +55,16 @@
           <label>Model</label> {{ form.model }} {{ form.model.errors }}
         </div>
       </div>
+
       <div class="form-row">
         <div>
           <label>Year</label> {{ form.year }} {{ form.year.errors }}
         </div>
         <div>
-          <label>Color</label> {{ form.color }} {{ form.color.errors }}
-        </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label>Car type</label> {{ form.car_type }} {{ form.car_type.errors }}
-        </div>
-        <div>
           <label>Transmission</label> {{ form.transmission }} {{ form.transmission.errors }}
         </div>
       </div>
+
       <div class="form-row">
         <div>
           <label>Seats</label> {{ form.seats }} {{ form.seats.errors }}
@@ -56,23 +73,19 @@
           <label>Doors</label> {{ form.doors }} {{ form.doors.errors }}
         </div>
       </div>
+
       <div class="form-row">
         <div>
           <label>Mileage (km)</label> {{ form.mileage_km }} {{ form.mileage_km.errors }}
+        </div>
+        <div>
+          <label>Color</label> {{ form.color }} {{ form.color.errors }}
         </div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Pricing & location</legend>
-      <div class="form-row">
-        <div>
-          <label>Price per day</label> {{ form.price_per_day }} {{ form.price_per_day.errors }}
-        </div>
-        <div>
-          <label>Currency</label> {{ form.currency }} {{ form.currency.errors }}
-        </div>
-      </div>
+      <legend>Location</legend>
       <div class="form-row">
         <div>
           <label>City</label> {{ form.location_city }} {{ form.location_city.errors }}

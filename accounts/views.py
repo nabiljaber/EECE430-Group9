@@ -1,75 +1,66 @@
 # accounts/views.py
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Q
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.views.generic import CreateView
 
-from .forms import SignUpForm
 from rentals.models import Booking
+from .forms import (
+    AccountUpdateForm,
+    DealerUpdateForm,
+    SignUpForm,
+)
+
+User = get_user_model()
 
 
 class SignUpView(CreateView):
+    model = User
     form_class = SignUpForm
     template_name = "registration/signup.html"
     success_url = reverse_lazy("login")
 
-    def form_valid(self, form):
-        """
-        After creating the account, send the user to the login page
-        and show a green success message (rendered in base.html).
-        """
-        response = super().form_valid(form)
-        messages.success(self.request, "Account created successfully. You can now sign in.")
-        return response
-
-
-def logout_then_home(request):
-    """
-    Sign out and send the user to the Home page with a green notice.
-    """
-    logout(request)
-    messages.success(request, "You've been signed out.")
-    return redirect("home")
-
 
 @login_required
 def account_dashboard(request):
-    """
-    Richer account dashboard showing upcoming trips and history.
-    """
-    bookings_qs = (
-        Booking.objects
+    bookings = (
+        Booking.objects.filter(user=request.user)
         .select_related("car", "car__dealer")
-        .filter(user=request.user)
-        .order_by("start_date")
+        .order_by("-start_date", "-created_at")
     )
-    metrics_raw = bookings_qs.aggregate(
-        total_spent=Sum("total_price"),
-        confirmed_count=Count("id", filter=Q(status=Booking.Status.CONFIRMED)),
-        pending_count=Count("id", filter=Q(status=Booking.Status.PENDING)),
-        cancelled_count=Count("id", filter=Q(status=Booking.Status.CANCELLED)),
+    return render(request, "registration/dashboard.html", {"bookings": bookings})
+
+
+@login_required
+def account_overview(request):
+    """
+    Account settings page.
+    - Always allows editing first_name, last_name, email (username is locked)
+    - If the user is a dealer, also show/edit dealership name/email/phone.
+    """
+    dealer_profile = getattr(request.user, "dealer_profile", None)
+
+    user_form = AccountUpdateForm(request.POST or None, instance=request.user)
+    dealer_form = (
+        DealerUpdateForm(request.POST or None, instance=dealer_profile)
+        if dealer_profile
+        else None
     )
-    bookings = list(bookings_qs)
-    today = timezone.localdate()
-    upcoming_bookings = [b for b in bookings if b.start_date >= today]
-    past_bookings = [b for b in bookings if b.start_date < today]
-    context = {
-        "bookings": bookings,
-        "upcoming_bookings": upcoming_bookings,
-        "past_bookings": past_bookings,
-        "next_booking": upcoming_bookings[0] if upcoming_bookings else None,
-        "metrics": {
-            "total": len(bookings),
-            "upcoming": len(upcoming_bookings),
-            "total_spent": metrics_raw.get("total_spent") or 0,
-            "confirmed": metrics_raw.get("confirmed_count") or 0,
-            "pending": metrics_raw.get("pending_count") or 0,
-            "cancelled": metrics_raw.get("cancelled_count") or 0,
-        },
-        "today": today,
-    }
-    return render(request, "registration/dashboard.html", context)
+
+    if request.method == "POST":
+        user_valid = user_form.is_valid()
+        dealer_valid = dealer_form.is_valid() if dealer_form else True
+
+        if user_valid and dealer_valid:
+            user_form.save()
+            if dealer_form:
+                dealer_form.save()
+            messages.success(request, "Account details updated.")
+            return redirect("account_overview")
+    return render(
+        request,
+        "registration/account_overview.html",
+        {"user_form": user_form, "dealer_form": dealer_form, "dealer_profile": dealer_profile},
+    )

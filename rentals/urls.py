@@ -7,6 +7,8 @@ urlpatterns = [
     path("", views.car_list, name="car_list"),
     path("<int:pk>/", views.car_detail, name="car_detail"),
     path("<int:pk>/book/", views.create_booking, name="create_booking"),
+    path("<int:pk>/favorite/", views.toggle_favorite, name="toggle_favorite"),
+    path("favorites/", views.favorites_list, name="favorites_list"),
 
     # Legacy (kept; guarded in the view)
     path("add/", views.add_car, name="add_car"),
