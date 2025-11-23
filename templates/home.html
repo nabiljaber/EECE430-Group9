@@ -65,8 +65,12 @@
     <div class="grid cards-3">
       {% for c in cars %}
         <article class="car-card card">
-          <a class="thumb" href="{% url 'car_detail' c.pk %}">
-            <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ c.title }}">
+            <a class="thumb" href="{% url 'car_detail' c.pk %}">
+              {% if c.primary_image %}
+                <img src="{{ c.primary_image }}" alt="{{ c.title }}">
+              {% else %}
+                <img src="{% static 'img/car-placeholder.svg' %}" alt="{{ c.title }}">
+              {% endif %}
           </a>
           <div class="body">
             <h3 class="title"><a href="{% url 'car_detail' c.pk %}">{{ c.title }}</a></h3>

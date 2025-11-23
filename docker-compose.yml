@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  db_accounts:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_ACCOUNTS_DB:-accounts}
+      POSTGRES_USER: ${POSTGRES_ACCOUNTS_USER:-accounts}
+      POSTGRES_PASSWORD: ${POSTGRES_ACCOUNTS_PASSWORD:-accounts}
+    volumes:
+      - pg_accounts:/var/lib/postgresql/data
+
+  db_rentals:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_RENTALS_DB:-rentals}
+      POSTGRES_USER: ${POSTGRES_RENTALS_USER:-rentals}
+      POSTGRES_PASSWORD: ${POSTGRES_RENTALS_PASSWORD:-rentals}
+    volumes:
+      - pg_rentals:/var/lib/postgresql/data
+
+  accounts_service:
+    build:
+      context: ./services/accounts_service
+    command: ["gunicorn", "accounts_service.wsgi:application", "--bind", "0.0.0.0:8000"]
+    environment:
+      DJANGO_SETTINGS_MODULE: accounts_service.settings
+      POSTGRES_DB: ${POSTGRES_ACCOUNTS_DB:-accounts}
+      POSTGRES_USER: ${POSTGRES_ACCOUNTS_USER:-accounts}
+      POSTGRES_PASSWORD: ${POSTGRES_ACCOUNTS_PASSWORD:-accounts}
+      POSTGRES_HOST: db_accounts
+      POSTGRES_PORT: 5432
+      ACCOUNTS_JWT_SECRET: ${ACCOUNTS_JWT_SECRET:-change-me}
+      DEBUG: ${DEBUG:-False}
+    depends_on:
+      - db_accounts
+    volumes:
+      - ./services/accounts_service:/app
+    expose:
+      - "8000"
+
+  rentals_service:
+    build:
+      context: ./services/rentals_service
+    command: ["gunicorn", "rentals_service.wsgi:application", "--bind", "0.0.0.0:8000"]
+    environment:
+      DJANGO_SETTINGS_MODULE: rentals_service.settings
+      POSTGRES_DB: ${POSTGRES_RENTALS_DB:-rentals}
+      POSTGRES_USER: ${POSTGRES_RENTALS_USER:-rentals}
+      POSTGRES_PASSWORD: ${POSTGRES_RENTALS_PASSWORD:-rentals}
+      POSTGRES_HOST: db_rentals
+      POSTGRES_PORT: 5432
+      ACCOUNTS_JWT_SECRET: ${ACCOUNTS_JWT_SECRET:-change-me}
+      ACCOUNTS_JWT_ALG: HS256
+      DEBUG: ${DEBUG:-False}
+    depends_on:
+      - db_rentals
+    volumes:
+      - ./services/rentals_service:/app
+      - media:/app/media
+      - staticfiles:/app/staticfiles
+    expose:
+      - "8000"
+
+  gateway:
+    build: .
+    command: ["gunicorn", "ajerlo.wsgi:application", "--bind", "0.0.0.0:8000"]
+    env_file: [.env]
+    environment:
+      APP_ROLE: gateway
+      DB_ENGINE: sqlite
+      ACCOUNTS_API_BASE: http://accounts_service:8000/api
+      RENTALS_API_BASE: http://rentals_service:8000/api
+      ACCOUNTS_JWT_SECRET: ${ACCOUNTS_JWT_SECRET:-change-me}
+    depends_on:
+      - accounts_service
+      - rentals_service
+    volumes:
+      - .:/app
+      - media:/app/media
+      - staticfiles:/app/staticfiles
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - gateway
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - staticfiles:/app/staticfiles:ro
+      - media:/app/media:ro
+    ports:
+      - "8080:80"
+
+volumes:
+  pg_accounts:
+  pg_rentals:
+  staticfiles:
+  media:

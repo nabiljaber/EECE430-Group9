@@ -6,62 +6,68 @@
 <h1>Account overview</h1>
 
 <div class="card" style="max-width:640px;">
-  <form method="post">
-    {% csrf_token %}
-
-    {% if user_form.non_field_errors %}
-      {{ user_form.non_field_errors }}
-    {% endif %}
-    {% if dealer_form and dealer_form.non_field_errors %}
-      {{ dealer_form.non_field_errors }}
-    {% endif %}
-
-    <fieldset>
-      <legend>Account</legend>
-      <div class="form-grid">
-        {% for field in user_form %}
-          <div class="form-field">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}
-              <p class="muted" style="font-size:12px;">{{ field.help_text }}</p>
-            {% endif %}
-            {% for error in field.errors %}
-              <p class="error">{{ error }}</p>
-            {% endfor %}
-          </div>
-        {% endfor %}
-      </div>
-    </fieldset>
-
-    {% if dealer_form %}
-      <fieldset style="margin-top:16px;">
-        <legend>Dealership</legend>
+  {% if user_form %}
+    <form method="post">
+      {% csrf_token %}
+      {% if user_form.non_field_errors %}
+        {{ user_form.non_field_errors }}
+      {% endif %}
+      {% if dealer_form and dealer_form.non_field_errors %}
+        {{ dealer_form.non_field_errors }}
+      {% endif %}
+      <fieldset>
+        <legend>Account</legend>
         <div class="form-grid">
-          {% for field in dealer_form %}
+          {% for field in user_form %}
             <div class="form-field">
               <label for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
-              {% if field.help_text %}
-                <p class="muted" style="font-size:12px;">{{ field.help_text }}</p>
-              {% endif %}
-              {% for error in field.errors %}
-                <p class="error">{{ error }}</p>
-              {% endfor %}
             </div>
           {% endfor %}
         </div>
       </fieldset>
-    {% endif %}
-
-    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
-      <a href="{% url 'home' %}" class="btn btn-outline">Cancel</a>
-      <button type="submit" class="btn btn-primary">Save changes</button>
+      {% if dealer_form %}
+        <fieldset style="margin-top:16px;">
+          <legend>Dealership</legend>
+          <div class="form-grid">
+            {% for field in dealer_form %}
+              <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endif %}
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+        <a href="{% url 'home' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </form>
+  {% else %}
+    <div class="kv">
+      <div>Username</div><div>{{ user_obj.username }}</div>
+      <div>Name</div><div>{{ user_obj.first_name }} {{ user_obj.last_name }}</div>
+      <div>Email</div><div>{{ user_obj.email }}</div>
     </div>
-  </form>
-
+  {% endif %}
   <div class="muted" style="margin-top:12px;font-size:12px;">
-    Your username (<strong>{{ request.user.username }}</strong>) cannot be changed.
+    Your username (<strong>{{ user_obj.username|default:request.user.username }}</strong>) cannot be changed.
   </div>
 </div>
+
+{% if dealer_info %}
+<div class="card" style="max-width:640px; margin-top:16px;">
+  <legend>Your dealership</legend>
+  <p style="margin:4px 0 8px;"><strong>{{ dealer_info.name }}</strong></p>
+  <p class="muted" style="margin:4px 0;">Email: {{ dealer_info.email }}</p>
+  {% if dealer_info.phone %}
+    <p class="muted" style="margin:4px 0;">Phone: {{ dealer_info.phone }}</p>
+  {% endif %}
+  <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+    <a class="btn btn-primary" href="{% url 'dealer_dashboard' %}">Dealer dashboard</a>
+    <a class="btn btn-outline" href="{% url 'dealer_add_car' %}">Add car</a>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
