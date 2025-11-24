@@ -42,11 +42,7 @@ media/
 # Translations (compiled)
 # locale/*/LC_MESSAGES/*.mo
 
-# --- Secrets / config ---
-.env
-.env.*
-*.env
-*.env.*
+
 
 # --- Packaging ---
 build/
