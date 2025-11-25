@@ -1,0 +1,32 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run App') {
+            steps {
+                sh 'python manage.py check'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build SUCCESS!'
+        }
+        failure {
+            echo 'Build FAILED!'
+        }
+    }
+}
