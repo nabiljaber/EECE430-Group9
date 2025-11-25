@@ -2,8 +2,10 @@ import os
 import requests
 
 
-ACCOUNTS_API = os.getenv("ACCOUNTS_API_BASE", "http://localhost:8001/api")
-RENTALS_API = os.getenv("RENTALS_API_BASE", "http://localhost:8002/api/rentals")
+ACCOUNTS_API = os.getenv("ACCOUNTS_API_BASE", "http://accounts-service:8001/api")
+RENTALS_API = os.getenv("RENTALS_API_BASE", "http://rentals-service:8002/api/rentals")
+
+
 
 
 def _headers(token=None):

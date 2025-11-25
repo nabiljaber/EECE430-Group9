@@ -16,8 +16,9 @@ def env_bool(name, default=False):
 
 # --- Dev basics ---
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-^5k7+xu3ck#6!v)r23me4y2n@nm30ivrm8h!q4myvgy(lj(40g')
-DEBUG = env_bool("DEBUG", True)
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
+
 
 # Optional: allow proxy/ingress domains for CSRF
 _csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS")
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
 # --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,6 +66,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'ajerlo.middleware.GatewayJWTMiddleware',
 ]
+
+
 
 # --- URLs / Templates ---
 ROOT_URLCONF = 'ajerlo.urls'
@@ -126,9 +130,19 @@ USE_I18N = True
 USE_TZ = True
 
 # --- Static files ---
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
 
 # --- Media uploads ---
 MEDIA_URL = '/media/'

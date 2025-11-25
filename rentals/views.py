@@ -1,4 +1,5 @@
 # rentals/views.py
+
 from functools import wraps
 from types import SimpleNamespace
 
@@ -7,6 +8,8 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from datetime import date as date_cls
+
+from .models import Car
 
 from ajerlo import api_client
 from .forms import BookingForm, DealerCarForm, PriceForm
@@ -49,43 +52,41 @@ def _ns(obj):
 
 
 def home(request):
-    data = api_client.rentals_list({"sort": "newest", "page": 1})
-    cars = _add_pk(data.get("results", [])[:8])
+    # local import to guarantee Car is defined
+    from .models import Car
+
+    cars = Car.objects.order_by("-id")[:8]  # newest 8 cars
     return render(request, "home.html", {"cars": cars})
 
 
+
 def car_list(request):
-    params = {
-        "q": request.GET.get("q") or "",
-        "make": request.GET.get("make") or "",
-        "dealer": request.GET.get("dealer") or "",
+    qs = Car.objects.all().order_by("-id")
+
+    q = request.GET.get("q") or ""
+    if q:
+        qs = qs.filter(title__icontains=q)
+
+    cars = qs  # you can add more filters later
+
+    context = {
+        "cars": cars,
+        "q": q,
         "type": request.GET.get("type") or "",
+        "make": request.GET.get("make") or "",
+        "dealer_name": request.GET.get("dealer") or "",
         "min_price": request.GET.get("min_price") or "",
         "max_price": request.GET.get("max_price") or "",
         "sort": request.GET.get("sort") or "newest",
-        "page": request.GET.get("page") or 1,
-    }
-    data = _add_pk(api_client.rentals_list(params))
-    current_page = int(params["page"])
-    total_pages = data.get("pages", 1)
-    context = {
-        "cars": data.get("results", []),
-        "q": params["q"],
-        "type": params["type"],
-        "make": params["make"],
-        "dealer_name": params["dealer"],
-        "min_price": params["min_price"],
-        "max_price": params["max_price"],
-        "sort": params["sort"],
-        "result_count": data.get("count", 0),
+        "result_count": cars.count(),
         "page": SimpleNamespace(
-            object_list=data.get("results", []),
-            number=current_page,
-            paginator=SimpleNamespace(num_pages=total_pages, page_range=range(1, total_pages + 1)),
-            has_previous=(current_page > 1),
-            has_next=(current_page < total_pages),
-            previous_page_number=current_page - 1,
-            next_page_number=current_page + 1,
+            object_list=list(cars),
+            number=1,
+            paginator=SimpleNamespace(num_pages=1, page_range=[1]),
+            has_previous=False,
+            has_next=False,
+            previous_page_number=1,
+            next_page_number=1,
         ),
         "base_qs": "",
         "base_qs_prefix": "q=",
