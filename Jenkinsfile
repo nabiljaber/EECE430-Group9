@@ -2,22 +2,22 @@ pipeline {
     agent any
 
     stages {
+
         stage('Clone Code') {
             steps {
-                echo "Repository cloned successfully by Jenkins"
+                echo "Repository cloned by Jenkins"
             }
         }
 
-        stage('Install Python Dependencies') {
+        stage('Install Dependencies') {
             steps {
-                sh 'pip3 install -r requirements.txt || true'
-                echo "Dependencies installed"
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
         stage('Static Code Check') {
             steps {
-                echo "Running basic tests..."
+                echo "Running Django check"
                 sh 'python3 manage.py check || true'
             }
         }
@@ -25,7 +25,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline finished successfully!"
+            echo "✔️ Pipeline successfully finished"
         }
         failure {
             echo "❌ Pipeline failed — check logs"
