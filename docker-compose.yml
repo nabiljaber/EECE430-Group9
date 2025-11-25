@@ -91,7 +91,7 @@ services:
       - staticfiles:/app/staticfiles:ro
       - media:/app/media:ro
     ports:
-      - "8080:80"
+      - "8096:80"
 
 volumes:
   pg_accounts:

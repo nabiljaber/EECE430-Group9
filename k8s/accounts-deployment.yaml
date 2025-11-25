@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts-service
+  template:
+    metadata:
+      labels:
+        app: accounts-service
+    spec:
+      containers:
+        - name: accounts-service
+          image: tamer1212/accounts-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: "accounts_service.settings"

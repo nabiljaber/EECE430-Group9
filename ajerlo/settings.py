@@ -36,8 +36,8 @@ SITE_NAME = "Ajerlo Rentals"
 SITE_TAGLINE = "Book cars with confidence"
 
 # --- Service endpoints (gateway)
-ACCOUNTS_API_BASE = os.getenv("ACCOUNTS_API_BASE", "http://localhost:8001/api")
-RENTALS_API_BASE = os.getenv("RENTALS_API_BASE", "http://localhost:8002/api")
+ACCOUNTS_API_BASE = os.getenv("ACCOUNTS_API_BASE", "http://accounts-service:8001/api")
+RENTALS_API_BASE = os.getenv("RENTALS_API_BASE", "http://rentals-service:8002/api")
 ACCOUNTS_JWT_SECRET = os.getenv("ACCOUNTS_JWT_SECRET", SECRET_KEY)
 ACCOUNTS_JWT_ALG = os.getenv("ACCOUNTS_JWT_ALG", "HS256")
 

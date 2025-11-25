@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ajerlo-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ajerlo-frontend
+  template:
+    metadata:
+      labels:
+        app: ajerlo-frontend
+    spec:
+      containers:
+      - name: ajerlo-frontend
+        image: tamer1212/ajerlo-frontend:latest
+        ports:
+        - containerPort: 80

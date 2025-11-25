@@ -1,22 +1,34 @@
 import os
 import requests
 
+# ----------------------------
+# KUBERNETES SERVICE ENDPOINTS
+# ----------------------------
+ACCOUNTS_API = os.getenv(
+    "ACCOUNTS_API_BASE",
+    "http://accounts-service:8001/api"
+)
 
-ACCOUNTS_API = os.getenv("ACCOUNTS_API_BASE", "http://localhost:8001/api")
-RENTALS_API = os.getenv("RENTALS_API_BASE", "http://localhost:8002/api/rentals")
+RENTALS_API = os.getenv(
+    "RENTALS_API_BASE",
+    "http://rentals-service:8002/api/rentals"
+)
 
 
 def _headers(token=None):
-    h = {"Host": "localhost"}
+    h = {"Host": "ajerlo.local"}     # <- FIX: never use localhost in Kubernetes
     if token:
         h["Authorization"] = f"Bearer {token}"
     return h
 
 
+# ----------------------------
+# ACCOUNTS SERVICE
+# ----------------------------
 def accounts_me(token):
     r = requests.get(f"{ACCOUNTS_API}/auth/me/", headers=_headers(token), timeout=10)
     r.raise_for_status()
-    return r.json()["user"]
+    return r.json().get("user")
 
 
 def accounts_login(username, password):
@@ -36,13 +48,17 @@ def accounts_login(username, password):
 
 
 def accounts_signup(payload):
-    r = requests.post(f"{ACCOUNTS_API}/auth/signup/", json=payload, timeout=10, headers=_headers())
+    r = requests.post(
+        f"{ACCOUNTS_API}/auth/signup/",
+        json=payload,
+        timeout=10,
+        headers=_headers(),
+    )
     try:
         data = r.json()
     except Exception:
         data = None
     if r.status_code not in (200, 201):
-        # prefer text detail if JSON missing
         detail = None
         if isinstance(data, dict) and "detail" in data:
             detail = data["detail"]
@@ -52,6 +68,9 @@ def accounts_signup(payload):
     return data, None
 
 
+# ----------------------------
+# RENTALS SERVICE
+# ----------------------------
 def rentals_list(params=None, token=None):
     r = requests.get(f"{RENTALS_API}/cars/", params=params or {}, headers=_headers(token), timeout=10)
     r.raise_for_status()
@@ -76,7 +95,12 @@ def rentals_my_bookings(token):
 
 
 def rentals_toggle_favorite(token, car_id):
-    r = requests.post(f"{RENTALS_API}/favorites/toggle/", json={"car_id": car_id}, headers=_headers(token), timeout=10)
+    r = requests.post(
+        f"{RENTALS_API}/favorites/toggle/",
+        json={"car_id": car_id},
+        headers=_headers(token),
+        timeout=10
+    )
     return r
 
 
@@ -87,7 +111,12 @@ def rentals_favorites(token):
 
 
 def rentals_dealer_apply(token, payload):
-    return requests.post(f"{RENTALS_API}/dealer/apply/", json=payload, headers=_headers(token), timeout=10)
+    return requests.post(
+        f"{RENTALS_API}/dealer/apply/",
+        json=payload,
+        headers=_headers(token),
+        timeout=10
+    )
 
 
 def rentals_dealer_dashboard(token):
@@ -103,26 +132,56 @@ def rentals_dealer_car_list(token):
 
 
 def rentals_dealer_car_create(token, payload, files=None):
-    return requests.post(f"{RENTALS_API}/dealer/cars/", headers=_headers(token), data=payload, files=files or {}, timeout=10)
+    return requests.post(
+        f"{RENTALS_API}/dealer/cars/",
+        headers=_headers(token),
+        data=payload,
+        files=files or {},
+        timeout=10
+    )
 
 
 def rentals_dealer_car_update(token, car_id, payload, files=None):
-    return requests.patch(f"{RENTALS_API}/dealer/cars/{car_id}/", headers=_headers(token), data=payload, files=files or {}, timeout=10)
+    return requests.patch(
+        f"{RENTALS_API}/dealer/cars/{car_id}/",
+        headers=_headers(token),
+        data=payload,
+        files=files or {},
+        timeout=10
+    )
 
 
 def rentals_dealer_car_delete(token, car_id):
-    return requests.delete(f"{RENTALS_API}/dealer/cars/{car_id}/", headers=_headers(token), timeout=10)
+    return requests.delete(
+        f"{RENTALS_API}/dealer/cars/{car_id}/",
+        headers=_headers(token),
+        timeout=10
+    )
 
 
 def rentals_dealer_price(token, car_id, payload):
-    return requests.post(f"{RENTALS_API}/dealer/cars/{car_id}/price/", headers=_headers(token), json=payload, timeout=10)
+    return requests.post(
+        f"{RENTALS_API}/dealer/cars/{car_id}/price/",
+        headers=_headers(token),
+        json=payload,
+        timeout=10
+    )
 
 
 def rentals_dealer_car_bookings(token, car_id):
-    r = requests.get(f"{RENTALS_API}/dealer/cars/{car_id}/bookings/", headers=_headers(token), timeout=10)
+    r = requests.get(
+        f"{RENTALS_API}/dealer/cars/{car_id}/bookings/",
+        headers=_headers(token),
+        timeout=10
+    )
     r.raise_for_status()
     return r.json()
 
 
 def rentals_dealer_booking_status(token, booking_id, action):
-    return requests.post(f"{RENTALS_API}/dealer/bookings/{booking_id}/status/", headers=_headers(token), json={"action": action}, timeout=10)
+    return requests.post(
+        f"{RENTALS_API}/dealer/bookings/{booking_id}/status/",
+        headers=_headers(token),
+        json={"action": action},
+        timeout=10
+    )
