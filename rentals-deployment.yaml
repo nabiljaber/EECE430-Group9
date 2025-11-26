@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rentals-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rentals
+  template:
+    metadata:
+      labels:
+        app: rentals
+    spec:
+      containers:
+        - name: rentals-container
+          image: rentals-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DEBUG
+              value: "0"
