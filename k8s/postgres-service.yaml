@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: accounts-service
+  name: postgres-service
   namespace: ajerlo
 spec:
   selector:
-    app: accounts
+    app: postgres
   ports:
-  - port: 8000
-    targetPort: 8000
+  - port: 5432
+    targetPort: 5432

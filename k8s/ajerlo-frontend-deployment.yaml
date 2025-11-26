@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ajerlo-frontend
+  namespace: ajerlo
 spec:
   replicas: 1
   selector:
@@ -14,6 +15,12 @@ spec:
     spec:
       containers:
       - name: ajerlo-frontend
-        image: tamer1212/ajerlo-frontend:latest
+        image: nginx:alpine
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
+        env:
+        - name: ACCOUNTS_API_BASE
+          value: "http://accounts-service:8000/api"
+        - name: RENTALS_API_BASE
+          value: "http://rentals-service:8000/api/rentals"

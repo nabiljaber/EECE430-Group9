@@ -1,23 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rentals-service
+  name: rentals
+  namespace: ajerlo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rentals-service
+      app: rentals
   template:
     metadata:
       labels:
-        app: rentals-service
+        app: rentals
     spec:
       containers:
-        - name: rentals-service
-          image: tamer1212/rentals-service:latest
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 8000
-          env:
-            - name: DJANGO_SETTINGS_MODULE
-              value: "rentals_service.settings"
+      - name: rentals
+        image: eece430-group9-rentals_service
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_HOST
+          value: postgres-service
+        - name: POSTGRES_DB
+          value: ajerlo
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: DB_ENGINE
+          value: postgres
+        ports:
+        - containerPort: 8000

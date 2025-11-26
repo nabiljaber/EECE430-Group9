@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "[$(date +"%H:%M:%S")] Starting entrypoint for ${APP_ROLE:-app}"

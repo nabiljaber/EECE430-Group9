@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -54,25 +55,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "rentals_service.wsgi.application"
 
-if os.getenv("DB_ENGINE", "postgres") == "postgres":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("POSTGRES_DB", "rentals"),
-            "USER": os.getenv("POSTGRES_USER", "rentals"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "rentals"),
-            "HOST": os.getenv("POSTGRES_HOST", "db_rentals"),
-            "PORT": os.getenv("POSTGRES_PORT", "5432"),
-            "CONN_MAX_AGE": 60,
-        }
+# Database (PostgreSQL only)
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "ajerlo"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.getenv("POSTGRES_HOST", "postgres-service"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        "CONN_MAX_AGE": 60,
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
+
+_database_url = os.getenv("DATABASE_URL")
+if _database_url:
+    DATABASES["default"] = dj_database_url.config(
+        default=_database_url,
+        conn_max_age=60,
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -57,25 +58,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "accounts_service.wsgi.application"
 
-if os.getenv("DB_ENGINE", "postgres") == "postgres":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("POSTGRES_DB", "accounts"),
-            "USER": os.getenv("POSTGRES_USER", "accounts"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "accounts"),
-            "HOST": os.getenv("POSTGRES_HOST", "db_accounts"),
-            "PORT": os.getenv("POSTGRES_PORT", "5432"),
-            "CONN_MAX_AGE": 60,
-        }
+# Database (PostgreSQL only)
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "ajerlo"),
+        "USER": os.getenv("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.getenv("POSTGRES_HOST", "postgres-service"),
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        "CONN_MAX_AGE": 60,
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
+
+_database_url = os.getenv("DATABASE_URL")
+if _database_url:
+    DATABASES["default"] = dj_database_url.config(
+        default=_database_url,
+        conn_max_age=60,
+    )
 
 # Simplified password validation for service-to-service signup
 AUTH_PASSWORD_VALIDATORS = [

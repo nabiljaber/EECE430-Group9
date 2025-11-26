@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ajerlo-backend
+  namespace: ajerlo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ajerlo-backend
+  template:
+    metadata:
+      labels:
+        app: ajerlo-backend
+    spec:
+      containers:
+      - name: ajerlo-backend
+        image: eece430-group9-gateway
+        imagePullPolicy: IfNotPresent
+
+        env:
+        - name: ACCOUNTS_API_BASE
+          value: "http://accounts-service:8000/api"
+        - name: RENTALS_API_BASE
+          value: "http://rentals-service:8000/api"
+        - name: DATABASE_URL
+          value: "postgresql://postgres:postgres@postgres-service:5432/ajerlo"
+
+        ports:
+        - containerPort: 8000

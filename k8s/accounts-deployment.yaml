@@ -1,23 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accounts-service
+  name: accounts
+  namespace: ajerlo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: accounts-service
+      app: accounts
   template:
     metadata:
       labels:
-        app: accounts-service
+        app: accounts
     spec:
       containers:
-        - name: accounts-service
-          image: tamer1212/accounts-service:latest
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 8000
-          env:
-            - name: DJANGO_SETTINGS_MODULE
-              value: "accounts_service.settings"
+      - name: accounts
+        image: eece430-group9-accounts_service
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_HOST
+          value: postgres-service
+        - name: POSTGRES_DB
+          value: ajerlo
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: DB_ENGINE
+          value: postgres
+        ports:
+        - containerPort: 8000

@@ -2,38 +2,38 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ajerlo-ingress
+  namespace: ajerlo
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
+  ingressClassName: nginx
   rules:
     - host: ajerlo.local
       http:
         paths:
+          # Backend (gateway / landing page)
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: ajerlo-frontend-service
+                name: ajerlo-backend-service
                 port:
-                  number: 80
-          - path: /accounts/
+                  number: 8000
+
+          # Accounts microservice
+          - path: /api/accounts
             pathType: Prefix
             backend:
               service:
                 name: accounts-service
                 port:
-                  number: 8001
-          - path: /rentals/
+                  number: 8000
+
+          # Rentals microservice
+          - path: /api/rentals
             pathType: Prefix
             backend:
               service:
                 name: rentals-service
-                port:
-                  number: 8002
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: ajerlo-backend-service
                 port:
                   number: 8000

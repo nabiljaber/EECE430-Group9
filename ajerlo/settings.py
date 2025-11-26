@@ -4,6 +4,7 @@ Django settings for ajerlo project.
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,27 +89,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ajerlo.wsgi.application'
 
-# --- Database ---
-if os.getenv("DB_ENGINE", "sqlite").lower() == "postgres":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB', 'ajerlo'),
-            'USER': os.getenv('POSTGRES_USER', 'ajerlo'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'ajerlo'),
-            'HOST': os.getenv('POSTGRES_HOST', 'db'),
-            'PORT': int(os.getenv('POSTGRES_PORT', '5432')),
-            'CONN_MAX_AGE': 60,
-        }
+# --- Database (PostgreSQL only) ---
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'ajerlo'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.getenv('POSTGRES_HOST', 'postgres-service'),
+        'PORT': int(os.getenv('POSTGRES_PORT', '5432')),
+        'CONN_MAX_AGE': 60,
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-            'OPTIONS': {'timeout': 20},
-        }
-    }
+}
+
+# Allow overriding via DATABASE_URL if provided
+_database_url = os.getenv("DATABASE_URL")
+if _database_url:
+    DATABASES['default'] = dj_database_url.config(
+        default=_database_url,
+        conn_max_age=60,
+    )
 
 # --- Password validation (min length = 9) ---
 AUTH_PASSWORD_VALIDATORS = [
